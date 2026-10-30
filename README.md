@@ -14,6 +14,14 @@ npm run build
 npm link
 ```
 
+## Terminal portrait
+
+Run `json-statham --help` (or `-h`) to see the original ASCII caricature inspired by Jason Statham and command help. Running without arguments shows the same screen with usage exit code 2. The monochrome portrait needs no color support or special fonts. Validation, comparison and `--json` reports keep their usual output.
+
+```sh
+node dist/cli.js --help
+```
+
 ## Validate
 
 ```sh

@@ -90,3 +90,38 @@ test('CLI terminates pathological schema evaluation with a resource diagnostic',
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('terminal help shows the portrait and documents both commands', () => {
+  for (const flag of ['--help', '-h']) {
+    const result = cli(flag);
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /JSON STATHAM/);
+    assert.match(result.stdout, /validate/);
+    assert.match(result.stdout, /compare/);
+    assert.match(result.stdout, /Your JSON has met its match/);
+    assert.equal(result.stderr, '');
+  }
+});
+
+test('no arguments show portrait and usage while retaining usage exit code', () => {
+  const result = cli();
+  assert.equal(result.status, 2);
+  assert.match(result.stdout, /JSON STATHAM/);
+  assert.match(result.stdout, /Usage:/);
+});
+
+test('portrait never contaminates machine reports or normal validation', () => {
+  for (const args of [
+    ['--json'],
+    ['--help', '--json'],
+    ['--help', 'unexpected', '--json'],
+  ]) {
+    const result = cli(...args);
+    assert.equal(result.status, 2);
+    assert.equal(JSON.parse(result.stdout).status, 'error');
+    assert.ok(!result.stdout.includes('JSON STATHAM'));
+  }
+  const result = cli('validate', 'examples/schema.json', 'examples/valid.json');
+  assert.equal(result.status, 0);
+  assert.ok(!result.stdout.includes('JSON STATHAM'));
+});

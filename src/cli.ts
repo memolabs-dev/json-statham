@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Worker } from 'node:worker_threads';
 import type { Report } from './core.js';
+import { renderHelp } from './help.js';
 interface CliReport {
   status: Report['status'] | 'error';
   diagnostics: Report['diagnostics'];
@@ -25,6 +26,12 @@ function output(report: CliReport): void {
           : 0;
 }
 if (
+  args.length === 0 ||
+  (args.length === 1 && ['--help', '-h'].includes(command))
+) {
+  console.log(renderHelp());
+  process.exitCode = args.length === 0 ? 2 : 0;
+} else if (
   positional.length !== 3 ||
   !['validate', 'compare'].includes(command) ||
   args.filter((a) => a === '--json').length > 1
