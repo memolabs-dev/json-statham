@@ -41,12 +41,12 @@ R2 races/interruption HIGH: same-FS atomic links, immutable intent/markers, stab
 R3 path traversal/permission leakage HIGH: fixed artifact names, no-follow regular captures, trusted canonical parent ancestry, owner-only artifacts, explicit targets.
 R4 false proof/corruption HIGH: strict manifest/marker schema and content digests, bounded worker replay, candidate/source correspondence, output identity checks.
 R5 resource abuse MEDIUM: 1MiB snapshots/depth64, existing operation128 limit, worker5s/128MiB, bounded metadata.
-R6 durability MEDIUM: fsync files and directory after publication; unsupported OS/filesystem fails closed. No portable power-failure guarantee beyond OS/local-FS sync contract.
+R6 durability MEDIUM: fsync files and directory after publication; unsupported OS and required filesystem-operation failures fail closed; local supported storage is a caller precondition, not an automatic filesystem-type detector. No portable power-failure guarantee beyond OS/local-FS sync contract.
 Open questions to falsify: directory fsync support on Mac/CI; invariant when outputs edited/deleted; incomplete stage readability; concurrent same vs different transactions; private publication payload aliasing separated from immutable snapshots. No high risk can remain unmitigated at closure.
 
 ## Evidence / acceptance
 
-Red-green CLI regressions cover review corrections. npm run check PASS (77/77 macOS, including installed tarball ESM/TypeScript/CLI). Two independent implementation reviews PASS after corrections; docs review and exact-head CI pending. Human acceptance is #18, separate from technical #16. Final AI state READY_FOR_MANUAL_ACCEPTANCE only for this scope after all required proofs. Human recipe: stage disposable example data, inspect, apply to new file, rerun idempotently, restore to new file, compare exact original bytes and confirm no originals were edited.
+Red-green CLI regressions cover review corrections. npm run check PASS (77/77 macOS, including installed tarball ESM/TypeScript/CLI). Two independent implementation reviews PASS after corrections; docs review PASS (filesystem-support wording clarified); exact-head CI pending. Human acceptance is #18, separate from technical #16. Final AI state READY_FOR_MANUAL_ACCEPTANCE only for this scope after all required proofs. Human recipe: stage disposable example data, inspect, apply to new file, rerun idempotently, restore to new file, compare exact original bytes and confirm no originals were edited.
 
 Primary mechanism refs: Node22 fs.linkSync/fsyncSync/open flags documentation; POSIX link no-replace semantics. These guarantee filesystem name publication, not atomic replacement of arbitrary concurrently modified live files.
 
