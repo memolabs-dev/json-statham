@@ -6,4 +6,4 @@ Acceptance: `--help`/`-h` prints portrait, usage and both commands, exits 0; no 
 
 Work: add static help renderer; connect argument dispatch; real CLI regression tests; inspect terminal rendering; full checks; publish PR and verify CI. Visual likeness remains for human acceptance.
 
-Evidence: initial focused regression run: 2 failing tests for missing help/portrait, JSON isolation test already PASS. `npm run check` PASS: formatting, lint, typecheck, build and all 17 tests. `node dist/cli.js --help` inspected: ASCII portrait and complete usage render without ANSI escapes. Remote CI pending.
+Evidence: initial focused regression run: 2 failing tests for missing help/portrait, JSON isolation test already PASS. `npm run check` PASS: formatting, lint, typecheck, build and all 17 tests. `node dist/cli.js --help` inspected: ASCII portrait and complete usage render without ANSI escapes. Remote CI PASS on Node 22 and 24: https://github.com/memolabs-dev/json-statham/actions/runs/41044465503 (implementation commit 3ed0bbd). PR #4 is open, not merged. Technical delivery #3 verified; visual acceptance tracked separately in #2. Status READY_FOR_MANUAL_ACCEPTANCE.
