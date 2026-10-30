@@ -20,7 +20,7 @@
   },
   "ready_for_manual_acceptance": true,
   "blockers": [],
-  "next_action": "Guillaume: manual acceptance in #2 (M0), #6 (Action), #9 (baselines). Remaining M1 implementation slice: stable library API.",
+  "next_action": "Guillaume: manual acceptance #2 (M0), #6 (Action), #9 (baselines), #12 (library API). M1 technical implementation is delivered; M2 requires its own scoped specification.",
   "repository": "https://github.com/memolabs-dev/json-statham",
   "technical_issue": 1,
   "manual_acceptance_issue": 2,
@@ -91,7 +91,7 @@
     },
     "library_api": {
       "issue": 11,
-      "status": "VERIFYING",
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
       "spec": "library-api.md",
       "tasks": {
         "A": "DONE",
@@ -99,13 +99,30 @@
         "C": "DONE",
         "D": "DONE",
         "E": "DONE",
-        "F": "VERIFYING"
+        "F": "DONE"
       },
-      "evidence": "library-api.md; local full gates 41 tests and pack dry run PASS; independent review/remote CI/integration pending.",
+      "evidence": "library-api.md; 41 tests and full pre-commit PASS; actual installed ESM/TypeScript/CLI consumer; independent review no blockers; six exact-head checks PASS; PR #13 merged and #11 CLOSED.",
       "local_checks": "PASS",
       "tests": 41,
       "manual_acceptance_issue": 12,
-      "independent_review": "PASS: focused typed errors/frozen inputs and actual installed ESM/TypeScript/CLI consumer independently rerun; no blocking findings."
+      "independent_review": "PASS: focused typed errors/frozen inputs and actual installed ESM/TypeScript/CLI consumer independently rerun; no blocking findings.",
+      "technical_issue_status": "CLOSED",
+      "pull_request": 13,
+      "integration": "MERGED",
+      "implementation_commit": "8f0c1729275962c96343eba377976eb936f429db",
+      "merge_commit": "acecb620ba8076bd9838ee86ab5a8d443b31bbf1",
+      "remote_ci": "PASS",
+      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41047894664"
+    }
+  },
+  "milestones": {
+    "M1": {
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
+      "technical_issues": [5, 8, 11],
+      "technical_status": "CLOSED",
+      "manual_acceptance_issues": [6, 9, 12],
+      "manual_status": "OPEN",
+      "evidence_refs": ["github-action.md", "baselines.md", "library-api.md"]
     }
   }
 }
