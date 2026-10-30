@@ -64,3 +64,29 @@ npm pack --dry-run
 ```
 
 Checks include formatting, lint, TypeScript, unit/integration tests and real CLI tests. GitHub Actions runs these checks on Node.js 22 and 24.
+
+## GitHub Action (M1 preview)
+
+On Linux GitHub-hosted runners, check out your repository and invoke this repository as an Action. Pin the Action to a reviewed commit SHA (no version tag is published yet). Only `contents: read` is needed; it never posts PR comments or uses a write token.
+
+```yaml
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: memolabs-dev/json-statham@REVIEWED_COMMIT_SHA
+        with:
+          schema: contracts/request.schema.json
+          document: fixtures/request.json
+```
+
+For comparison, set `command: compare`, `old-schema` and `new-schema`. The direction is old → new. Paths refer to files in the checked-out workspace. The default command is `validate`; both its `schema`/`document` inputs (or both comparison inputs) must be provided.
+
+The step fails for invalid documents, input/resource errors or potential breakage. Outputs `status` and `exit-code` retain CLI meanings. To inspect outputs after an expected failure, give the Action step an `id` and `continue-on-error: true`, then read `steps.<id>.outputs.status` and `steps.<id>.outputs.exit-code`; this opts out of blocking the workflow and should only be used deliberately.
+
+The first check log line is the complete JSON report; subsequent lines are GitHub error annotations. Annotations identify the document or new-schema file and include the JSON Pointer in their message; they do not claim an exact source line. At most 50 diagnostic annotations are emitted, with a notice if more exist; the JSON report retains all findings. The Action additionally rejects CLI output above 1 MiB or a child process exceeding eight seconds. The CLI's five-second evaluation deadline still applies.
+
+The Action sets up Node 24, installs its own locked development dependencies with lifecycle scripts disabled, and builds its CLI. This requires npm registry access during setup. Contract evaluation never resolves network references. No consumer install scripts are run. Baselines and a stable library API are future M1 slices.

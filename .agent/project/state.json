@@ -38,6 +38,22 @@
       "implementation_commit": "3ed0bbd",
       "pull_request": 4,
       "integration": "Live integration status: https://github.com/memolabs-dev/json-statham/pull/4"
+    },
+    "github_action": {
+      "issue": 5,
+      "status": "VERIFYING",
+      "spec": "github-action.md",
+      "tasks": {
+        "A": "DONE",
+        "B": "DONE",
+        "C": "DONE",
+        "D": "DONE",
+        "E": "VERIFYING",
+        "F": "IN_PROGRESS"
+      },
+      "evidence": "github-action.md; npm run check PASS (26 tests), npm pack --dry-run PASS; independent review and composite remote CI pending.",
+      "local_checks": "PASS",
+      "tests": 26
     }
   }
 }

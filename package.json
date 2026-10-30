@@ -22,7 +22,7 @@
     "test": "npm run build && node --test test/*.test.mjs",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
     "prepare": "husky",
-    "format:check": "prettier --check src test docs examples *.md *.json .github .agent"
+    "format:check": "prettier --check src test docs examples *.md *.json .github .agent action.yml"
   },
   "dependencies": {
     "ajv": "8.20.0"

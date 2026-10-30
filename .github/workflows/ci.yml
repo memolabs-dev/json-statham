@@ -9,11 +9,54 @@ jobs:
       matrix:
         node: [22, 24]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
       - run: npm run check
       - run: npm pack --dry-run
+
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./
+        id: valid
+        with:
+          schema: examples/schema.json
+          document: examples/valid.json
+      - uses: ./
+        id: invalid
+        continue-on-error: true
+        with:
+          schema: examples/schema.json
+          document: examples/invalid.json
+      - uses: ./
+        id: comparison
+        continue-on-error: true
+        with:
+          command: compare
+          old-schema: examples/schema.json
+          new-schema: examples/next-schema.json
+      - name: Assert Action outcomes and outputs
+        shell: bash
+        env:
+          VALID_STATUS: ${{ steps.valid.outputs.status }}
+          VALID_CODE: ${{ steps.valid.outputs.exit-code }}
+          INVALID_STATUS: ${{ steps.invalid.outputs.status }}
+          INVALID_CODE: ${{ steps.invalid.outputs.exit-code }}
+          INVALID_OUTCOME: ${{ steps.invalid.outcome }}
+          COMPARE_STATUS: ${{ steps.comparison.outputs.status }}
+          COMPARE_CODE: ${{ steps.comparison.outputs.exit-code }}
+          COMPARE_OUTCOME: ${{ steps.comparison.outcome }}
+        run: |
+          test "$VALID_STATUS" = valid
+          test "$VALID_CODE" = 0
+          test "$INVALID_STATUS" = invalid
+          test "$INVALID_CODE" = 1
+          test "$INVALID_OUTCOME" = failure
+          test "$COMPARE_STATUS" = potentially-breaking
+          test "$COMPARE_CODE" = 3
+          test "$COMPARE_OUTCOME" = failure
