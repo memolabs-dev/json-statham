@@ -1,5 +1,5 @@
 {
-  "status": "VERIFYING",
+  "status": "READY_FOR_MANUAL_ACCEPTANCE",
   "scope": "M2 persistent file versions (#16)",
   "tasks": {
     "A": "DONE",
@@ -7,23 +7,25 @@
     "C": "DONE",
     "D": "DONE",
     "E": "DONE",
-    "F": "DONE"
+    "F": "DONE",
+    "G": "DONE",
+    "H": "DONE"
   },
-  "evidence_ref": "m0.md",
+  "evidence_ref": "m2-persistence.md",
   "verification": {
     "local": "PASS",
-    "tests": 14,
+    "tests": 77,
     "package_install_smoke": "PASS",
     "remote_ci": "PASS",
-    "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41044047077",
-    "implementation_commit": "68b4e8c2022c492ebe6282a98224a0011ea6f8d2"
+    "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41082690971",
+    "implementation_commit": "4bf59bf0fc5e32822f20192100993fb284262497"
   },
-  "ready_for_manual_acceptance": false,
+  "ready_for_manual_acceptance": true,
   "blockers": [],
-  "next_action": "Full local gates, exact-head Linux/macOS CI, independent final docs review, PR merge and close #16; retain separate human acceptance.",
+  "next_action": "Guillaume: manual acceptance #18 for durable versions and #15 for dry-run; previous #2/#6/#9/#12 remain human acceptance only. M2 technical #14/#16 are closed; no delivered scope should be reproposed. M3/automatic suggestions require separate scope.",
   "repository": "https://github.com/memolabs-dev/json-statham",
-  "technical_issue": 1,
-  "manual_acceptance_issue": 2,
+  "technical_issue": 16,
+  "manual_acceptance_issue": 18,
   "technical_issue_status": "CLOSED",
   "changes": {
     "terminal_portrait": {
@@ -147,7 +149,7 @@
     },
     "m2_persistence": {
       "issue": 16,
-      "status": "VERIFYING",
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
       "spec": "m2-persistence.md",
       "risk_tier": "T3",
       "tasks": {
@@ -157,16 +159,23 @@
         "D": "DONE",
         "E": "DONE",
         "F": "DONE",
-        "G": "VERIFYING",
-        "H": "TODO"
+        "G": "DONE",
+        "H": "DONE"
       },
-      "evidence": "npm run check PASS (77/77, macOS); disposable real CLI persistence/recovery/races/permission tests; installed tarball ESM/TypeScript/CLI PASS. CI pending.",
-      "technical_issue_status": "OPEN",
-      "remote_ci": "PENDING",
+      "evidence": "77/77 local tests, full pre-commit, npm pack dry-run, installed ESM/TypeScript/CLI PASS; all10 exact-head push/PR checks PASS (Linux/macOS Node22/24, durable workflow and real Action); #19 MERGED, #16 actually CLOSED, #18 OPEN.",
+      "technical_issue_status": "CLOSED",
+      "remote_ci": "PASS",
       "local_checks": "PASS",
       "tests": 77,
       "manual_acceptance_issue": 18,
-      "independent_review": "PASS: independent standards/security and spec reviews, including recovered output+marker sync ordering, CLI dispatch, real ACL and six focused regression reruns. Final docs review pending."
+      "independent_review": "PASS: standards/security and spec reviewers; source/recovery and real CLI regressions independently checked; docs rechecked at4bf59bf. No blocking findings.",
+      "pull_request": 19,
+      "integration": "MERGED",
+      "implementation_commit": "4bf59bf0fc5e32822f20192100993fb284262497",
+      "merge_commit": "2c8b75cb1849ab19bd6d51a5540e225aa5b22327",
+      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41082690971",
+      "critical_risks_open": 0,
+      "high_risks_open": 0
     }
   },
   "milestones": {
@@ -179,14 +188,16 @@
       "evidence_refs": ["github-action.md", "baselines.md", "library-api.md"]
     },
     "M2": {
-      "status": "IMPLEMENTING",
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
       "first_slice_issue": 14,
       "manual_acceptance_issue": 15,
-      "remaining_technical_issues": [16],
-      "scope_note": "Dry-run delivered; persistent append-only versions implementing #16 are under final verification.",
+      "remaining_technical_issues": [],
+      "scope_note": "Explicit proposals, dry-run and append-only durable apply/restore technically delivered. Automatic schema-derived suggestions are optional separately scoped design.",
       "first_slice_status": "READY_FOR_MANUAL_ACCEPTANCE",
       "first_slice_technical_status": "CLOSED",
-      "manual_acceptance_status": "OPEN"
+      "manual_acceptance_status": "OPEN",
+      "technical_status": "CLOSED",
+      "manual_acceptance_issues": [15, 18]
     }
   }
 }

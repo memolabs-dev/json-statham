@@ -27,7 +27,7 @@ TX-7 Existing validate/compare/baseline/plan/dry-run and Action outputs unchange
 ## Finite work graph
 
 A MODEL/spec + review delivered PR17 → B captured file/snapshot preparation → C durable manifest + worker stage → D no-replace apply/idempotence/source checks → E restore intent/byte proof → F inspect/recovery/concurrency and permissions adversarial tests → G docs/full gates/independent review/exact-head CI → H merge/tracker/manual handoff.
-Each A–H DONE only with recorded evidence. A–F DONE: 16 real CLI persistence tests pass; G VERIFYING, H TODO. Existing source/target simulation evidence #14 reused rather than duplicated.
+Each A–H DONE only with recorded evidence. A–F DONE: 16 real CLI persistence tests pass; G–H DONE: full gates, independent reviews, exact-head CI and tracker integration below. Existing source/target simulation evidence #14 reused rather than duplicated.
 
 ## Coverage / verification
 
@@ -46,7 +46,7 @@ Open questions to falsify: directory fsync support on Mac/CI; invariant when out
 
 ## Evidence / acceptance
 
-Red-green CLI regressions cover review corrections. npm run check PASS (77/77 macOS, including installed tarball ESM/TypeScript/CLI). Two independent implementation reviews PASS after corrections; docs review PASS (filesystem-support wording clarified); exact-head CI pending. Human acceptance is #18, separate from technical #16. Final AI state READY_FOR_MANUAL_ACCEPTANCE only for this scope after all required proofs. Human recipe: stage disposable example data, inspect, apply to new file, rerun idempotently, restore to new file, compare exact original bytes and confirm no originals were edited.
+Red-green CLI regressions cover review corrections. npm run check PASS (77/77 macOS, including installed tarball ESM/TypeScript/CLI). Two independent implementation reviews PASS after corrections; docs review PASS (filesystem-support wording clarified); exact-head CI PASS. Human acceptance is #18, separate from technical #16. Final AI state READY_FOR_MANUAL_ACCEPTANCE only for this scope after all required proofs. Human recipe: stage disposable example data, inspect, apply to new file, rerun idempotently, restore to new file, compare exact original bytes and confirm no originals were edited.
 
 Primary mechanism refs: Node22 fs.linkSync/fsyncSync/open flags documentation; POSIX link no-replace semantics. These guarantee filesystem name publication, not atomic replacement of arbitrary concurrently modified live files.
 
@@ -55,3 +55,11 @@ Review-discovered required corrections: (C1) recovery must fsync an already link
 Darwin ACL extension: POSIX mode bits alone cannot establish the chosen private path profile on macOS. A real ACL-grant regression failed under mode0700. The Darwin path/file checker now rejects grant ACEs using bounded shell-free /bin/ls -ldeb with fixed C locale, allowing deny-only OS ACLs; results cache only by inode/ctime/mode/uid within the process. Linux POSIX ACL grants are constrained by the checked permission mask. Data inputs must be caller/root-owned, not group/world writable; root-owned sticky ancestors are permitted, while writable destinations remain caller-owned. ACL replication remains out of scope. Final independent recheck required.
 
 Recovery durability refinement C5: both independently reviewed recovery paths now confirm+fsync the already-owned output inode and its parent before the completion marker. Existing marker fast returns were removed as well: every successful ensureMarker validates content, fsyncs the marker inode, transaction directory and its parent, without rewriting the marker. This covers interruption after either output or marker link publication but before directory flush. Proof combines direct ordering review with real public on-disk pending-phase replay; no claim of hardware power-failure simulation.
+
+## Closure evidence — 2026-10-30
+
+All TX-1..7 verified: 16 persistence CLI tests plus 61 existing domain/CLI/Action/package tests (77/77 macOS). Linux skips only the Darwin-specific ACL case. Full formatting/lint/typecheck/build, installed tarball ESM/TypeScript/CLI, npm pack dry-run and full Husky pre-commit PASS. Both independent source/recovery reviews PASS; final docs reviewed after filesystem-support wording correction.
+
+All10 checks on exact head 4bf59bf0fc5e32822f20192100993fb284262497 PASS: Node22/24 Linux/macOS, real composite Action, documented migration and durable version workflow. Evidence: https://github.com/memolabs-dev/json-statham/actions/runs/41082690971 and https://github.com/memolabs-dev/json-statham/actions/runs/41082681627. PR19 MERGED as 2c8b75cb1849ab19bd6d51a5540e225aa5b22327; issue16 actually CLOSED (verified from GitHub). Manual acceptance18 remains OPEN.
+
+Risk disposition R1–R4 MITIGATED by no-replace exact-byte/concurrency/recovery/corruption/permissions/ACL tests and independent source review; R5 MITIGATED by size/depth/FIFO/worker deadline regressions; R6 MITIGATED within the declared local filesystem sync contract by recovery-phase tests, direct ordering review and Linux/macOS CI. No high/critical open risks. Power-loss hardware emulation, hostile same-user/root and network filesystem guarantees are not claimed. No live user-data migration or registry publication occurred. A–H technically DONE with this evidence; final scope status READY_FOR_MANUAL_ACCEPTANCE, human recipe in README and issue18. Branches retained.
