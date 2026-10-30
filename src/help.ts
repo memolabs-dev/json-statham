@@ -30,13 +30,16 @@ Usage:
   json-statham validate <schema> <document> [--json]
   json-statham compare <old-schema> <new-schema> [--json] [--baseline file]
   json-statham baseline <old-schema> <new-schema> [--json]
+  json-statham plan <old-schema> <new-schema> --operations <patch-file>
+  json-statham dry-run <old-schema> <new-schema> --document <file> --plan <file> [--json [--include-result]]
   json-statham --help
 
   --json     Emit one machine-readable report without artwork.
   --baseline Accept reviewed findings for an exact comparison (compare only).
+  --include-result Export candidate and rollback values (dry-run with --json).
   -h, --help Show this help.
 
-Exit codes: 0 success, 1 invalid document, 2 input/usage error,
+Exit codes: 0 success, 1 invalid/rejected document, 2 input/usage error,
             3 potentially breaking contract.
 `;
 }

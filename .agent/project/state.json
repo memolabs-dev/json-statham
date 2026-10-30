@@ -113,6 +113,30 @@
       "merge_commit": "acecb620ba8076bd9838ee86ab5a8d443b31bbf1",
       "remote_ci": "PASS",
       "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41047894664"
+    },
+    "m2_dry_run": {
+      "issue": 14,
+      "status": "VERIFYING",
+      "spec": "m2-dry-run.md",
+      "scope": "M2 first slice: explicit proposals, simulation and in-memory verified rollback only",
+      "tasks": {
+        "A": "DONE",
+        "B": "DONE",
+        "C": "DONE",
+        "D": "DONE",
+        "E": "VERIFYING",
+        "F": "IN_PROGRESS"
+      },
+      "review_m1": "m1-review.md; no behavior blockers; explicit catch narrowing coverage added",
+      "evidence": "m2-dry-run.md; 60 tests and pack dry run PASS; exact-head remote CI/integration still pending.",
+      "risk_tier": "T3 (review-evidenced executable-input/prototype boundary; mitigated before publication)",
+      "tests": 60,
+      "local_checks": "PASS",
+      "manual_acceptance_issue": 15,
+      "remaining_m2_issue": 16,
+      "critical_risks_open": 0,
+      "high_risks_open": 0,
+      "independent_review": "PASS: security and spec axes; eight review findings fixed through red-green regressions and independently rechecked"
     }
   },
   "milestones": {
@@ -123,6 +147,13 @@
       "manual_acceptance_issues": [6, 9, 12],
       "manual_status": "OPEN",
       "evidence_refs": ["github-action.md", "baselines.md", "library-api.md"]
+    },
+    "M2": {
+      "status": "IMPLEMENTING",
+      "first_slice_issue": 14,
+      "manual_acceptance_issue": 15,
+      "remaining_technical_issues": [16],
+      "scope_note": "First slice is clone-only migration proposal/dry-run/rollback proof. Persistent apply/restore is not implemented."
     }
   }
 }

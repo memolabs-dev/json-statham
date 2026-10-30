@@ -111,7 +111,7 @@ For the GitHub Action, add `baseline: path/to/accepted-baseline.json` alongside 
 
 ## Library API (ESM, Node.js 22+)
 
-Build an installable artifact from this repository with `npm ci` and `npm pack`, then install the resulting `json-statham-0.1.0.tgz` into your consumer with `npm install /path/to/json-statham-0.1.0.tgz`. Packing builds the package; importing it does not initialize the CLI or install hooks. Registry publication is a separate release action.
+Build an installable artifact from this repository with `npm ci` and `npm pack`, then install the resulting `json-statham-0.2.0.tgz` into your consumer with `npm install /path/to/json-statham-0.2.0.tgz`. Packing builds the package; importing it does not initialize the CLI or install hooks. Registry publication is a separate release action.
 
 ```ts
 import {
@@ -141,7 +141,7 @@ try {
 }
 ```
 
-Public runtime exports are `validate(schema, document)`, `compare(before, after, baseline?)`, `createBaseline(before, after)` and `ContractInputError`. Arguments are parsed JSON-compatible values; unknown inputs are checked at runtime for schema/baseline validity. No function coerces, repairs or writes user inputs. Return values are ordinary JSON-compatible report/baseline objects; there is no generic TypeScript type guard claiming a schema proves an arbitrary caller-supplied type.
+The M1 runtime exports are `validate(schema, document)`, `compare(before, after, baseline?)`, `createBaseline(before, after)` and `ContractInputError`. Arguments are parsed JSON-compatible values; unknown inputs are checked at runtime for schema/baseline validity. No function coerces, repairs or writes user inputs. Return values are ordinary JSON-compatible report/baseline objects; there is no generic TypeScript type guard claiming a schema proves an arbitrary caller-supplied type.
 
 | Result type        | Status values                                   | Additional fields                                                           |
 | ------------------ | ----------------------------------------------- | --------------------------------------------------------------------------- |
@@ -162,3 +162,50 @@ Messages omit underlying compiler details, schema values and raw causes. Match m
 Only the package-root ESM imports are supported. CommonJS/browser builds and internal subpaths such as `json-statham/dist/core.js` are outside the supported API. The current 0.x compatibility policy preserves documented exports, result status sets, error codes, field meanings and baseline v1 in patch releases; intentional contract changes require a minor release (a major release after 1.0). Additive API evolution is documented in the release diff. Exact diagnostic wording and runtime performance are not stable contracts.
 
 `npm run check` includes a real `npm pack`/temporary installation, ESM imports, strict TypeScript consumer compilation, unsupported internal-import rejection and the installed CLI binary. Dependency installation in that check needs npm cache/registry access; contract evaluation itself stays offline. Temporary consumer files are removed after the check.
+
+## M2 preview: propose and simulate a migration
+
+Review explicit [JSON Patch](https://www.rfc-editor.org/rfc/rfc6902) operations, then bind them to one exact source/target schema pair. This first M2 slice provides proposals, simulation and a verified in-memory rollback snapshot. Persistent file apply/restore and schema-derived operation suggestions remain future M2 slices.
+
+```sh
+json-statham plan examples/migration-old.json examples/migration-new.json --operations examples/migration-operations.json > migration-plan.json
+json-statham dry-run examples/migration-old.json examples/migration-new.json --document examples/valid.json --plan migration-plan.json --json
+# Explicitly export candidate document and original-value rollback snapshot:
+json-statham dry-run examples/migration-old.json examples/migration-new.json --document examples/valid.json --plan migration-plan.json --json --include-result
+```
+
+`plan` emits a versioned artifact with `kind: migration`, the canonical schema-pair hash and your operations. It contains the operation values you supplied; handle it according to your data sensitivity. Shell redirection explicitly creates/overwrites the named destination. The CLI itself never edits your files. Inspect proposed operations for business intent before using their results; schema validity does not prove semantic correctness.
+
+Supported operations are `add`, `remove`, `replace` and `test` (maximum 128). Paths use JSON Pointer escaping, including `~1` for `/` and `~0` for `~`. Paths containing `__proto__`, `constructor` or `prototype` segments are rejected; root removal and `move`/`copy` are outside this subset. Application uses [fast-json-patch](https://github.com/Starcounter-Jack/JSON-Patch) with operation validation and prototype protection, on private copies of the document and operations.
+
+A dry-run requires a source-valid document and an exactly matching plan/schema pair. It checks the candidate against the target schema, then applies a root-replacement snapshot on a copy to verify restoration of the original JSON value and its source validity. `status: verified`, exit 0 means these checks passed, with `rollbackVerified: true` and `operationCount`; it does not apply anything persistently. Invalid source or target documents return `status: rejected`, phase `source`/`target`, sanitized diagnostics and exit 1. Bad inputs, malformed/stale plans or failed operations return exit 2.
+
+Default reports contain no candidate/rollback values. `--json --include-result` explicitly adds `document` and `rollback`, which can contain sensitive current and original values. Exported JSON is capped at 1 MiB; a larger explicit export fails without printing a partial result. Generated plans also must fit 1 MiB including the trailing newline. File inputs and migrated documents must fit 1 MiB and depth 64. Worker time/heap limits remain in force. A result that exceeds those bounds is not reported as verified.
+
+The source package version is 0.2.0 for these additive public exports:
+
+```ts
+import {
+  createMigrationPlan,
+  dryRunMigration,
+  MigrationInputError,
+  type MigrationPlan,
+  type MigrationReport,
+  type MigrationOperation,
+  type MigrationErrorCode,
+} from 'json-statham';
+
+const oldSchema = { type: 'object' };
+const newSchema = {
+  type: 'object',
+  properties: { active: { type: 'boolean' } },
+  required: ['active'],
+};
+const plan: MigrationPlan = createMigrationPlan(oldSchema, newSchema, [
+  { op: 'add', path: '/active', value: true },
+]);
+const result: MigrationReport = dryRunMigration(oldSchema, newSchema, {}, plan);
+if (result.status === 'verified') console.log(result.document, result.rollback);
+```
+
+The pure migration API enforces JSON byte/depth and operation limits but remains synchronous; caller-owned process isolation is still needed for untrusted schemas. It rejects non-JSON values, cycles, accessors and non-plain objects instead of coercing them. Returned candidates and rollback snapshots are private copies. `MigrationInputError.code` is one of `invalid-input`, `invalid-plan`, `schema-mismatch`, `patch-failed`, `rollback-failed`, `plan-too-large`, with sanitized messages; schema compilation may throw the existing `ContractInputError`. In-memory rollback wrappers may exceed the source document byte size slightly; the CLI export cap applies to the complete emitted report. The existing GitHub Action remains validate/compare only; these new commands are available through the CLI/library.

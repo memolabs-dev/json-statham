@@ -49,13 +49,15 @@ test(
         join(dir, 'consumer.mjs'),
         `import assert from 'node:assert/strict';
 import * as api from 'json-statham';
-assert.deepEqual(Object.keys(api).sort(),['ContractInputError','compare','createBaseline','validate']);
+assert.deepEqual(Object.keys(api).sort(),['ContractInputError','MigrationInputError','compare','createBaseline','createMigrationPlan','dryRunMigration','validate']);
 assert.equal(api.validate({type:'integer'},1).status,'valid');
 assert.equal(api.validate({type:'integer'},'1').status,'invalid');
 const old={type:'string'}, next={type:'string',minLength:1};
 assert.equal(api.compare(old,next,api.createBaseline(old,next)).status,'accepted');
 assert.throws(() => api.validate({type:'PRIVATE_VALUE'},null),e => e instanceof api.ContractInputError && e.code === 'invalid-schema' && !String(e).includes('PRIVATE_VALUE'));
 await assert.rejects(import('json-statham/dist/worker.js'),{code:'ERR_PACKAGE_PATH_NOT_EXPORTED'});
+const migration=api.createMigrationPlan(true,true,[{op:'add',path:'/active',value:true}]);
+assert.equal(api.dryRunMigration(true,true,{},migration).rollbackVerified,true);
 console.log('consumer-ok');`,
       );
       assert.equal(
@@ -64,7 +66,7 @@ console.log('consumer-ok');`,
       );
       writeFileSync(
         join(dir, 'consumer.ts'),
-        `import {validate, compare, createBaseline, ContractInputError, type ValidationReport, type ComparisonReport, type Report, type Baseline, type Diagnostic, type InputErrorCode} from 'json-statham';
+        `import {createMigrationPlan as createMigrationPlanForTypes,dryRunMigration as dryRunForTypes,validate, compare, createBaseline, ContractInputError, type ValidationReport, type ComparisonReport, type Report, type Baseline, type Diagnostic, type InputErrorCode} from 'json-statham';
 const validation:ValidationReport=validate(true,null);
 const validationStatus:'valid'|'invalid'=validation.status;
 const comparison:ComparisonReport=compare(true,false);
@@ -73,6 +75,19 @@ const report:Report=validation;
 const baseline:Baseline=createBaseline(true,false);
 const diagnostics:Diagnostic[]=comparison.diagnostics;
 const code:InputErrorCode=new ContractInputError('invalid-schema').code;
+try { validate({type:'unknown'},null); } catch (error:unknown) {
+  if (error instanceof ContractInputError) {
+    const caughtCode:InputErrorCode=error.code;
+    void caughtCode;
+  }
+}
+const migrationPlan:import('json-statham').MigrationPlan=createMigrationPlanForTypes(true,true,[]);
+const migrationReport:import('json-statham').MigrationReport=dryRunForTypes(true,true,{},migrationPlan);
+if(migrationReport.status==='verified') {
+  const proof:true=migrationReport.rollbackVerified;
+  const undo:import('json-statham').MigrationOperation[]=migrationReport.rollback;
+  void [proof,undo];
+}
 // @ts-expect-error Validation never returns an accepted comparison.
 const wrongValidation:ValidationReport['status']='accepted';
 // @ts-expect-error Comparison never validates one document.

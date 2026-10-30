@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { canonical, digest } from './json.js';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 
 export interface Diagnostic {
@@ -41,16 +41,6 @@ export interface ComparisonReport {
 }
 const pointer = (key: string) =>
   key.replaceAll('~', '~0').replaceAll('/', '~1');
-const canonical = (value: unknown): string =>
-  JSON.stringify(value, (_key, item) =>
-    item && typeof item === 'object' && !Array.isArray(item)
-      ? Object.fromEntries(
-          Object.keys(item)
-            .sort()
-            .map((key) => [key, item[key]]),
-        )
-      : item,
-  );
 
 export function compare(
   before: unknown,
@@ -131,8 +121,6 @@ export interface Baseline {
   comparison: string;
   accepted: string[];
 }
-const digest = (value: unknown): string =>
-  createHash('sha256').update(canonical(value)).digest('hex');
 const diagnosticId = (comparison: string, diagnostic: Diagnostic): string =>
   digest([comparison, diagnostic.code, diagnostic.path]);
 export function createBaseline(before: unknown, after: unknown): Baseline {
