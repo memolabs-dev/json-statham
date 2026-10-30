@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validate, compare, createBaseline } from '../dist/core.js';
+import {
+  validate,
+  compare,
+  createBaseline,
+  ContractInputError,
+} from '../dist/index.js';
 
 test('validation accepts an admitted document and preserves it', () => {
   const document = { name: 'Statham' };
@@ -177,4 +182,76 @@ test('unknown baseline IDs grant no acceptance and empty baselines preserve unch
     'unchanged',
   );
   assert.throws(() => createBaseline({ type: 12 }, after));
+});
+
+test('schema input failures expose stable typed codes without compiler contents', () => {
+  for (const invoke of [
+    () => validate({ type: 'SECRET_SCHEMA_TYPE' }, null),
+    () => compare(true, { type: 'SECRET_SCHEMA_TYPE' }),
+    () => createBaseline({ type: 'SECRET_SCHEMA_TYPE' }, true),
+  ]) {
+    assert.throws(
+      invoke,
+      (error) =>
+        error instanceof ContractInputError &&
+        error.code === 'invalid-schema' &&
+        !String(error).includes('SECRET') &&
+        !('cause' in error),
+    );
+  }
+  assert.equal(
+    validate({ type: 'integer' }, 'not an integer').status,
+    'invalid',
+  );
+});
+
+test('unsupported schemas and malformed baselines have distinct stable input error codes', () => {
+  for (const invoke of [
+    () => validate({ $async: true, type: 'integer' }, 1),
+    () => compare(true, { $async: true, type: 'integer' }),
+    () => createBaseline({ $async: true, type: 'integer' }, true),
+  ]) {
+    assert.throws(
+      invoke,
+      (error) =>
+        error instanceof ContractInputError &&
+        error.code === 'unsupported-schema',
+    );
+  }
+  for (const baseline of [
+    null,
+    {},
+    { version: 2, comparison: 'SECRET', accepted: [] },
+  ]) {
+    assert.throws(
+      () => compare(true, false, baseline),
+      (error) =>
+        error instanceof ContractInputError &&
+        error.code === 'invalid-baseline' &&
+        !String(error).includes('SECRET'),
+    );
+  }
+});
+
+test('public library operations preserve frozen contracts, documents and accepted baselines', () => {
+  const member = Object.freeze({ type: 'string' });
+  const properties = Object.freeze({ field: member });
+  const before = Object.freeze({ type: 'object', properties });
+  const after = Object.freeze({
+    type: 'object',
+    properties,
+    required: Object.freeze(['field']),
+  });
+  const document = Object.freeze({ field: 'x' });
+  assert.equal(validate(before, document).status, 'valid');
+  const baseline = createBaseline(before, after);
+  Object.freeze(baseline.accepted);
+  Object.freeze(baseline);
+  assert.equal(compare(before, after, baseline).status, 'accepted');
+  assert.deepEqual(document, { field: 'x' });
+  assert.deepEqual(after, {
+    type: 'object',
+    properties: { field: { type: 'string' } },
+    required: ['field'],
+  });
 });
