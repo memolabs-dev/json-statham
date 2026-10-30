@@ -34,10 +34,10 @@
       "tests": 17,
       "remote_ci": "PASS",
       "manual_acceptance_issue": 2,
-      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41044465503",
+      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41044566222",
       "implementation_commit": "3ed0bbd",
       "pull_request": 4,
-      "integration": "PR open; not merged"
+      "integration": "Live integration status: https://github.com/memolabs-dev/json-statham/pull/4"
     }
   }
 }
