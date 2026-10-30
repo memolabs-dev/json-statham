@@ -22,3 +22,9 @@ _Avoid_: sample payload, proof of compatibility
 **Contract check**: A validation or comparison evaluated as one acceptance gate.
 
 **Annotation**: A diagnostic attached to a file in a development platform, retaining its contract location.
+
+**Baseline**: A versioned record of explicitly accepted diagnostics for one exact old-to-new contract pair. It does not assert compatibility.
+
+**Accepted diagnostic**: A potential breaking change explicitly included in a matching baseline, retained for review but excluded from the failure gate.
+
+**Stale baseline**: A baseline whose contract pair no longer matches the comparison; it grants no acceptance.

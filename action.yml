@@ -12,6 +12,8 @@ inputs:
     description: Previous schema file for compare, relative to the workspace
   new-schema:
     description: New schema file for compare, relative to the workspace
+  baseline:
+    description: Optional reviewed baseline file for compare only
 outputs:
   status:
     description: CLI report status
@@ -36,6 +38,7 @@ runs:
       shell: bash
       working-directory: ${{ github.workspace }}
       env:
+        INPUT_BASELINE: ${{ inputs.baseline }}
         INPUT_COMMAND: ${{ inputs.command }}
         INPUT_SCHEMA: ${{ inputs.schema }}
         INPUT_DOCUMENT: ${{ inputs.document }}

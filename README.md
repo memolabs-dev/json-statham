@@ -45,12 +45,12 @@ Comparison is deliberately conservative: every structural change is flagged, inc
 
 `--json` emits a single JSON report with `status`, `diagnostics` and an optional `counterexample`. Each diagnostic has `code`, `path` (JSON Pointer) and `message`. Human reports show status and diagnostics. Diagnostics omit document values; pointers may contain property names.
 
-| Exit | Meaning                                     |
-| ---- | ------------------------------------------- |
-| 0    | Valid document or unchanged schemas         |
-| 1    | Document rejected by schema                 |
-| 2    | Usage, JSON, schema, file or resource error |
-| 3    | Potentially breaking contract change        |
+| Exit | Meaning                                                |
+| ---- | ------------------------------------------------------ |
+| 0    | Valid document, unchanged schemas or accepted baseline |
+| 1    | Document rejected by schema                            |
+| 2    | Usage, JSON, schema, file or resource error            |
+| 3    | Potentially breaking contract change                   |
 
 ## Limits and security
 
@@ -89,4 +89,22 @@ The step fails for invalid documents, input/resource errors or potential breakag
 
 The first check log line is the complete JSON report; subsequent lines are GitHub error annotations. Annotations identify the document or new-schema file and include the JSON Pointer in their message; they do not claim an exact source line. At most 50 diagnostic annotations are emitted, with a notice if more exist; the JSON report retains all findings. The Action additionally rejects CLI output above 1 MiB or a child process exceeding eight seconds. The CLI's five-second evaluation deadline still applies.
 
-The Action sets up Node 24, installs its own locked development dependencies with lifecycle scripts disabled, and builds its CLI. This requires npm registry access during setup. Contract evaluation never resolves network references. No consumer install scripts are run. Baselines and a stable library API are future M1 slices.
+The Action sets up Node 24, installs its own locked development dependencies with lifecycle scripts disabled, and builds its CLI. This requires npm registry access during setup. Contract evaluation never resolves network references. No consumer install scripts are run. A stable library API remains a future M1 slice.
+
+## Review and accept a comparison baseline
+
+Baselines record explicit acceptance of diagnostics; they do not prove compatibility. First review the normal comparison and its implications for callers. Generate the baseline only after deciding to accept those findings:
+
+```sh
+json-statham compare examples/schema.json examples/next-schema.json --json
+json-statham baseline examples/schema.json examples/next-schema.json > accepted-baseline.json
+json-statham compare examples/schema.json examples/next-schema.json --baseline accepted-baseline.json --json
+```
+
+Generation emits versioned JSON to stdout and never writes files itself. If the generated artifact would exceed the 1 MiB loading limit, generation fails with exit 2 and an explicit diagnostic. Shell redirection above explicitly creates the file; it will overwrite an existing destination, so choose it deliberately. Commit and review baseline files under your repository's usual change controls. Baselines contain SHA-256 identities, not schemas or payload values. They are not signed authorization records.
+
+A matching baseline changes fully accepted comparisons to `status: accepted`, exit 0. Reports retain `acceptedDiagnostics`, any still-active `diagnostics`, the synthetic counterexample when available, and `baseline: {stale, accepted}`. Removing entries from the baseline's `accepted` list permits partial acceptance; remaining findings retain exit 3. Unknown IDs grant no acceptance. An accepted comparison remains a potentially breaking contract whose findings you have waived.
+
+Any change to either schema (including annotation or array-order changes) makes the baseline stale: nothing is accepted, active findings retain exit 3, and human/JSON output identifies the stale baseline. Object-key reordering alone is ignored. Regenerate only after reviewing the new comparison. Unsupported/malformed baselines, missing files and inputs over the CLI limits return exit 2; validation does not support baselines.
+
+For the GitHub Action, add `baseline: path/to/accepted-baseline.json` alongside `command: compare`, `old-schema` and `new-schema`. Accepted comparisons publish `status: accepted` and `exit-code: 0`, while accepted diagnostics remain visible in the JSON log report. Stale comparisons retain the usual blocking annotations.

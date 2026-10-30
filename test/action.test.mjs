@@ -13,6 +13,7 @@ function run(inputs) {
       timeout: 10000,
       env: {
         ...process.env,
+        INPUT_BASELINE: '',
         INPUT_COMMAND: '',
         INPUT_SCHEMA: '',
         INPUT_DOCUMENT: '',
@@ -226,4 +227,57 @@ test('Action permits unchanged contracts without error annotations', () => {
     status: 'unchanged',
     diagnostics: [],
   });
+});
+
+test('Action accepts only a matching explicitly supplied comparison baseline', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'statham-action-baseline-'));
+  try {
+    const generated = spawnSync(
+      process.execPath,
+      [
+        'dist/cli.js',
+        'baseline',
+        'examples/schema.json',
+        'examples/next-schema.json',
+      ],
+      { encoding: 'utf8' },
+    );
+    assert.equal(generated.status, 0);
+    const baseline = join(dir, 'accepted.json');
+    writeFileSync(baseline, generated.stdout);
+    const result = run({
+      INPUT_COMMAND: 'compare',
+      INPUT_OLD_SCHEMA: 'examples/schema.json',
+      INPUT_NEW_SCHEMA: 'examples/next-schema.json',
+      INPUT_BASELINE: baseline,
+    });
+    assert.equal(result.status, 0);
+    assert.equal(result.outputs, 'status=accepted\nexit-code=0\n');
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.acceptedDiagnostics.length, 1);
+    assert.equal(report.baseline.stale, false);
+    const misuse = run({
+      INPUT_COMMAND: 'validate',
+      INPUT_SCHEMA: 'examples/schema.json',
+      INPUT_DOCUMENT: 'examples/valid.json',
+      INPUT_BASELINE: baseline,
+    });
+    assert.equal(misuse.status, 2);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('Action rejects baseline generation before emitting any success outputs', () => {
+  const result = run({
+    INPUT_COMMAND: 'baseline',
+    INPUT_SCHEMA: 'examples/schema.json',
+    INPUT_DOCUMENT: 'examples/next-schema.json',
+  });
+  assert.equal(result.status, 2);
+  assert.equal(result.outputs, 'status=error\nexit-code=2\n');
+  const lines = result.stdout.trim().split('\n');
+  assert.equal(lines.length, 2);
+  assert.equal(JSON.parse(lines[0]).status, 'error');
+  assert.ok(lines[1].startsWith('::error::'));
 });

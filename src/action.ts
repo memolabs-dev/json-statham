@@ -2,7 +2,11 @@ import { appendFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 try {
+  if (!['validate', 'compare'].includes(process.env.INPUT_COMMAND ?? ''))
+    throw new Error('Unsupported Action command.');
   const comparing = process.env.INPUT_COMMAND === 'compare';
+  const baseline = process.env.INPUT_BASELINE;
+  if (baseline && !comparing) throw new Error('Baselines require comparison.');
   const first =
     (comparing ? process.env.INPUT_OLD_SCHEMA : process.env.INPUT_SCHEMA) ?? '';
   const second =
@@ -16,6 +20,7 @@ try {
       first,
       second,
       '--json',
+      ...(baseline ? ['--baseline', baseline] : []),
     ],
     { encoding: 'utf8', timeout: 8000, maxBuffer: 1024 * 1024 },
   );
