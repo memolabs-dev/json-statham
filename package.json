@@ -6,7 +6,13 @@
   "bin": {
     "json-statham": "dist/cli.js"
   },
-  "exports": "./dist/core.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
     "README.md",
@@ -22,7 +28,8 @@
     "test": "npm run build && node --test test/*.test.mjs",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
     "prepare": "husky",
-    "format:check": "prettier --check src test docs examples *.md *.json .github .agent action.yml"
+    "format:check": "prettier --check src test docs examples *.md *.json .github .agent action.yml",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "ajv": "8.20.0"
@@ -35,5 +42,6 @@
     "prettier": "^3.9.10",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.0.0"
-  }
+  },
+  "types": "./dist/index.d.ts"
 }

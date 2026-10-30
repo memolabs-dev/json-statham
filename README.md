@@ -54,7 +54,7 @@ Comparison is deliberately conservative: every structural change is flagged, inc
 
 ## Limits and security
 
-CLI inputs must be regular files no larger than 1 MiB, with nesting at most 64. Evaluation runs in a worker with a five-second deadline and a 128 MiB old-generation heap limit. Error reports redact underlying parser and compiler details. The reusable core (`dist/core.js`) exposes `validate` and `compare`; callers must provide their own resource isolation for untrusted inputs.
+CLI inputs must be regular files no larger than 1 MiB, with nesting at most 64. Evaluation runs in a worker with a five-second deadline and a 128 MiB old-generation heap limit. Error reports redact underlying parser and compiler details. The synchronous library exposes `validate`, `compare` and `createBaseline` from the package root; callers must provide their own resource isolation for untrusted inputs.
 
 ## Develop
 
@@ -89,7 +89,7 @@ The step fails for invalid documents, input/resource errors or potential breakag
 
 The first check log line is the complete JSON report; subsequent lines are GitHub error annotations. Annotations identify the document or new-schema file and include the JSON Pointer in their message; they do not claim an exact source line. At most 50 diagnostic annotations are emitted, with a notice if more exist; the JSON report retains all findings. The Action additionally rejects CLI output above 1 MiB or a child process exceeding eight seconds. The CLI's five-second evaluation deadline still applies.
 
-The Action sets up Node 24, installs its own locked development dependencies with lifecycle scripts disabled, and builds its CLI. This requires npm registry access during setup. Contract evaluation never resolves network references. No consumer install scripts are run. A stable library API remains a future M1 slice.
+The Action sets up Node 24, installs its own locked development dependencies with lifecycle scripts disabled, and builds its CLI. This requires npm registry access during setup. Contract evaluation never resolves network references. No consumer install scripts are run. The supported library API is documented below.
 
 ## Review and accept a comparison baseline
 
@@ -108,3 +108,57 @@ A matching baseline changes fully accepted comparisons to `status: accepted`, ex
 Any change to either schema (including annotation or array-order changes) makes the baseline stale: nothing is accepted, active findings retain exit 3, and human/JSON output identifies the stale baseline. Object-key reordering alone is ignored. Regenerate only after reviewing the new comparison. Unsupported/malformed baselines, missing files and inputs over the CLI limits return exit 2; validation does not support baselines.
 
 For the GitHub Action, add `baseline: path/to/accepted-baseline.json` alongside `command: compare`, `old-schema` and `new-schema`. Accepted comparisons publish `status: accepted` and `exit-code: 0`, while accepted diagnostics remain visible in the JSON log report. Stale comparisons retain the usual blocking annotations.
+
+## Library API (ESM, Node.js 22+)
+
+Build an installable artifact from this repository with `npm ci` and `npm pack`, then install the resulting `json-statham-0.1.0.tgz` into your consumer with `npm install /path/to/json-statham-0.1.0.tgz`. Packing builds the package; importing it does not initialize the CLI or install hooks. Registry publication is a separate release action.
+
+```ts
+import {
+  validate,
+  compare,
+  createBaseline,
+  ContractInputError,
+  type ValidationReport,
+  type ComparisonReport,
+} from 'json-statham';
+
+try {
+  const validation: ValidationReport = validate({ type: 'integer' }, 42);
+  const oldSchema = { type: 'string' };
+  const newSchema = { type: 'string', minLength: 1 };
+  const comparison: ComparisonReport = compare(oldSchema, newSchema);
+  // Only after reviewing and accepting this exact comparison:
+  const baseline = createBaseline(oldSchema, newSchema);
+  const accepted = compare(oldSchema, newSchema, baseline);
+  console.log(validation.status, comparison.status, accepted.status);
+} catch (error) {
+  if (error instanceof ContractInputError) {
+    console.error(error.code, error.message);
+  } else {
+    throw error;
+  }
+}
+```
+
+Public runtime exports are `validate(schema, document)`, `compare(before, after, baseline?)`, `createBaseline(before, after)` and `ContractInputError`. Arguments are parsed JSON-compatible values; unknown inputs are checked at runtime for schema/baseline validity. No function coerces, repairs or writes user inputs. Return values are ordinary JSON-compatible report/baseline objects; there is no generic TypeScript type guard claiming a schema proves an arbitrary caller-supplied type.
+
+| Result type        | Status values                                   | Additional fields                                                           |
+| ------------------ | ----------------------------------------------- | --------------------------------------------------------------------------- |
+| `ValidationReport` | `valid`, `invalid`                              | `diagnostics`                                                               |
+| `ComparisonReport` | `unchanged`, `potentially-breaking`, `accepted` | `diagnostics`, optional `counterexample`, `acceptedDiagnostics`, `baseline` |
+| `Baseline`         | No status; `version: 1`                         | `comparison`, `accepted` hashes                                             |
+
+`Report` is the validation/comparison union. `Diagnostic`, `Baseline`, `InputErrorCode` and the result types above are exported as TypeScript types. A rejected document returns `invalid`; it does not throw an input error. Expected schema/baseline failures throw `ContractInputError` with readonly `code`:
+
+| Code                 | Meaning                                                                    |
+| -------------------- | -------------------------------------------------------------------------- |
+| `invalid-schema`     | Invalid/unsupported strict schema syntax, formats or unresolved references |
+| `unsupported-schema` | Asynchronous schema execution is unsupported                               |
+| `invalid-baseline`   | Malformed/unsupported baseline structure                                   |
+
+Messages omit underlying compiler details, schema values and raw causes. Match machine codes rather than human wording. Other exceptions may represent caller programming or resource faults. The library is synchronous: it has **no worker deadline, file-size, depth or heap limits**. Use the CLI/Action or caller-owned process isolation for untrusted input. The CLI's baseline artifact size limit applies when generating/reading files; in-memory `createBaseline` does not impose that file limit. Evaluation does not resolve network references.
+
+Only the package-root ESM imports are supported. CommonJS/browser builds and internal subpaths such as `json-statham/dist/core.js` are outside the supported API. The current 0.x compatibility policy preserves documented exports, result status sets, error codes, field meanings and baseline v1 in patch releases; intentional contract changes require a minor release (a major release after 1.0). Additive API evolution is documented in the release diff. Exact diagnostic wording and runtime performance are not stable contracts.
+
+`npm run check` includes a real `npm pack`/temporary installation, ESM imports, strict TypeScript consumer compilation, unsupported internal-import rejection and the installed CLI binary. Dependency installation in that check needs npm cache/registry access; contract evaluation itself stays offline. Temporary consumer files are removed after the check.

@@ -1,0 +1,19 @@
+# M1 library API — T2
+
+Scope: stabilize the existing synchronous Node 22+ ESM API. Preserve runtime reports and baseline v1; no npm publication, CJS build, browser support or new async worker API. Use an explicit root entry, without exposing CLI/worker internals.
+
+Requirements / acceptance:
+
+- API-1: root exports validate, compare, createBaseline and ContractInputError; declarations expose Diagnostic, ValidationReport, ComparisonReport, Report, Baseline and InputErrorCode. Validation status is only valid/invalid; comparison status only unchanged/potentially-breaking/accepted. Report remains their union. Existing JSON shapes unchanged.
+- API-2: invalid schema/compiler input throws ContractInputError(code=invalid-schema), async schemas unsupported-schema, malformed baselines invalid-baseline. Stable public messages contain no schema/payload contents, no raw cause. Existing asynchronous/invalid-baseline wording preserved. Expected document rejection is a report, not an exception. No error conversion of arbitrary external caller effects promised; inputs must be parsed JSON-compatible values.
+- API-3: conditional types/import root exports plus types fallback work in a real installed tarball. Consumer ESM runtime and TypeScript strict NodeNext compilation prove valid imports, specific statuses, expected type errors and catch narrowing. Internal subpath imports not supported.
+- API-4: package build does not emit broken artifacts on type errors; pack includes all declarations/runtime deps; installed binary still works. Installed consumer test uses npm pack/install with lifecycle scripts disabled, temp files cleaned and processes bounded; registry/cache availability needed for dependency installation only.
+- API-5: docs define API contracts, error codes, baseline exact-pair behavior, compatibility policy and security limits. Sync core has no worker/file limits; use CLI/Action or caller-owned isolation for untrusted inputs. Full check/pre-commit/CI and independent review.
+
+Graph: A specification → B narrow result contracts/consumer typing → C typed sanitized errors → D explicit root + real installed consumer → E docs/regression/CI → F review, green CI, merge and tracker.
+Risks: narrowing types clarifies existing runtime behavior; Report compatibility alias retained. Inputs unknown permits parsed untrusted JSON; schema trust/resource isolation still caller responsibility. Expected input failures sanitized at compiler boundary; exceptions are not declared compatibility proof. No new credentials/network evaluation, deployment or data mutation.
+Status: IMPLEMENTING. Evidence pending. Manual acceptance: integrate the documented imports in a small Node/TypeScript consumer; inspect typed reports and error handling.
+
+Local evidence: red-green process consumer initially failed for missing ValidationReport and overly broad comparison statuses; after narrow reports and explicit typed ESM root, installed consumer ESM imports, strict TypeScript checks (including expected errors), internal import rejection and real npm-installed CLI binary all PASS. Red-green core tests covered missing typed input errors and missing distinct async/baseline codes; frozen contract/document/baseline calls PASS. `npm run check` PASS (41 tests: 18 core, 11 CLI, 11 Action, 1 installed package consumer); `npm pack --dry-run` PASS including actual prepack build; `git diff --check` PASS. Independent review and exact-head remote CI pending.
+
+Independent read-only review: no blocking findings. Reviewer reran the three typed-error/frozen-input tests and the real tarball consumer test successfully. The root export also retains a default resolution target pointing to the same ESM entry, preserving legacy fallback resolution wherever the runtime supported it; no CommonJS build is promised. Manual API acceptance is #12. Exact-head CI remains the final integration gate.

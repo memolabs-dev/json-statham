@@ -6,21 +6,16 @@ export interface Diagnostic {
   path: string;
   message: string;
 }
-export interface Report {
-  status:
-    'valid' | 'invalid' | 'potentially-breaking' | 'unchanged' | 'accepted';
+export interface ValidationReport {
+  status: 'valid' | 'invalid';
   diagnostics: Diagnostic[];
 }
+export type Report = ValidationReport | ComparisonReport;
 
-export function validate(schema: unknown, document: unknown): Report {
-  const ajv = new Ajv2020({
-    strict: true,
-    strictRequired: false,
-    allErrors: false,
-  });
-  const check = ajv.compile(schema as object | boolean);
+export function validate(schema: unknown, document: unknown): ValidationReport {
+  const check = compileSchema(schema);
   if ('$async' in check && check.$async)
-    throw new Error('Asynchronous contracts are unsupported.');
+    throw new ContractInputError('unsupported-schema');
   return check(document)
     ? { status: 'valid', diagnostics: [] }
     : {
@@ -37,7 +32,9 @@ export function validate(schema: unknown, document: unknown): Report {
       };
 }
 
-export interface ComparisonReport extends Report {
+export interface ComparisonReport {
+  status: 'potentially-breaking' | 'unchanged' | 'accepted';
+  diagnostics: Diagnostic[];
   counterexample?: unknown;
   acceptedDiagnostics?: Diagnostic[];
   baseline?: { stale: boolean; accepted: number };
@@ -61,16 +58,13 @@ export function compare(
   baseline?: unknown,
 ): ComparisonReport {
   // Compile both contracts even when their text is identical.
-  const ajv = new Ajv2020({ strict: true, strictRequired: false });
-  const oldCheck = ajv.compile(before as object | boolean);
-  const newCheck = new Ajv2020({ strict: true, strictRequired: false }).compile(
-    after as object | boolean,
-  );
+  const oldCheck = compileSchema(before);
+  const newCheck = compileSchema(after);
   if (
     ('$async' in oldCheck && oldCheck.$async) ||
     ('$async' in newCheck && newCheck.$async)
   )
-    throw new Error('Asynchronous contracts are unsupported.');
+    throw new ContractInputError('unsupported-schema');
   const diagnostics: Diagnostic[] = [];
   function walk(oldValue: unknown, newValue: unknown, path: string): void {
     if (canonical(oldValue) === canonical(newValue)) return;
@@ -153,7 +147,7 @@ export function createBaseline(before: unknown, after: unknown): Baseline {
 
 function assertBaseline(value: unknown): asserts value is Baseline {
   if (!value || typeof value !== 'object' || Array.isArray(value))
-    throw new Error('Invalid baseline.');
+    throw new ContractInputError('invalid-baseline');
   const b = value as Record<string, unknown>;
   const hash = (v: unknown): v is string =>
     typeof v === 'string' && /^[a-f0-9]{64}$/.test(v);
@@ -165,5 +159,33 @@ function assertBaseline(value: unknown): asserts value is Baseline {
     !b.accepted.every(hash) ||
     new Set(b.accepted).size !== b.accepted.length
   )
-    throw new Error('Invalid baseline.');
+    throw new ContractInputError('invalid-baseline');
+}
+
+export type InputErrorCode =
+  'invalid-schema' | 'unsupported-schema' | 'invalid-baseline';
+export class ContractInputError extends Error {
+  readonly code: InputErrorCode;
+  constructor(code: InputErrorCode) {
+    const messages = {
+      'invalid-schema':
+        'Invalid schema; check supported JSON Schema syntax and references.',
+      'unsupported-schema': 'Asynchronous contracts are unsupported.',
+      'invalid-baseline': 'Invalid baseline.',
+    };
+    super(messages[code]);
+    this.name = 'ContractInputError';
+    this.code = code;
+  }
+}
+function compileSchema(schema: unknown) {
+  try {
+    return new Ajv2020({
+      strict: true,
+      strictRequired: false,
+      allErrors: false,
+    }).compile(schema as object | boolean);
+  } catch {
+    throw new ContractInputError('invalid-schema');
+  }
 }

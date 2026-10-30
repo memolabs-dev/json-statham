@@ -88,6 +88,24 @@
       "merge_commit": "7bb0734b3e306347da37f81fb6de07eaf9bc4536",
       "remote_ci": "PASS",
       "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41046588122"
+    },
+    "library_api": {
+      "issue": 11,
+      "status": "VERIFYING",
+      "spec": "library-api.md",
+      "tasks": {
+        "A": "DONE",
+        "B": "DONE",
+        "C": "DONE",
+        "D": "DONE",
+        "E": "DONE",
+        "F": "VERIFYING"
+      },
+      "evidence": "library-api.md; local full gates 41 tests and pack dry run PASS; independent review/remote CI/integration pending.",
+      "local_checks": "PASS",
+      "tests": 41,
+      "manual_acceptance_issue": 12,
+      "independent_review": "PASS: focused typed errors/frozen inputs and actual installed ESM/TypeScript/CLI consumer independently rerun; no blocking findings."
     }
   }
 }
