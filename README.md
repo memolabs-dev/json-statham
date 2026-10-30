@@ -2,7 +2,7 @@
 
 Your JSON has met its match.
 
-Deterministic JSON Schema validation and conservative contract comparison. No AI or network access is required. Inputs are never modified.
+Deterministic JSON Schema validation and conservative contract comparison. No AI or network access is required. Existing inputs and destinations are never modified.
 
 ## Install from source
 
@@ -63,7 +63,7 @@ npm run check
 npm pack --dry-run
 ```
 
-Checks include formatting, lint, TypeScript, unit/integration tests and real CLI tests. GitHub Actions runs these checks on Node.js 22 and 24.
+Checks include formatting, lint, TypeScript, unit/integration tests and real CLI tests. GitHub Actions runs these checks on Node.js 22 and 24 on Linux and macOS.
 
 ## GitHub Action (M1 preview)
 
@@ -111,7 +111,7 @@ For the GitHub Action, add `baseline: path/to/accepted-baseline.json` alongside 
 
 ## Library API (ESM, Node.js 22+)
 
-Build an installable artifact from this repository with `npm ci` and `npm pack`, then install the resulting `json-statham-0.2.0.tgz` into your consumer with `npm install /path/to/json-statham-0.2.0.tgz`. Packing builds the package; importing it does not initialize the CLI or install hooks. Registry publication is a separate release action.
+Build an installable artifact from this repository with `npm ci` and `npm pack`, then install the resulting `json-statham-0.3.0.tgz` into your consumer with `npm install /path/to/json-statham-0.3.0.tgz`. Packing builds the package; importing it does not initialize the CLI or install hooks. Registry publication is a separate release action.
 
 ```ts
 import {
@@ -165,7 +165,7 @@ Only the package-root ESM imports are supported. CommonJS/browser builds and int
 
 ## M2 preview: propose and simulate a migration
 
-Review explicit [JSON Patch](https://www.rfc-editor.org/rfc/rfc6902) operations, then bind them to one exact source/target schema pair. This first M2 slice provides proposals, simulation and a verified in-memory rollback snapshot. Persistent file apply/restore and schema-derived operation suggestions remain future M2 slices.
+Review explicit [JSON Patch](https://www.rfc-editor.org/rfc/rfc6902) operations, then bind them to one exact source/target schema pair. This first M2 slice provides proposals, simulation and a verified in-memory rollback snapshot. Persistent file versions are available through the CLI below; schema-derived operation suggestions remain outside this slice.
 
 ```sh
 json-statham plan examples/migration-old.json examples/migration-new.json --operations examples/migration-operations.json > migration-plan.json
@@ -182,7 +182,7 @@ A dry-run requires a source-valid document and an exactly matching plan/schema p
 
 Default reports contain no candidate/rollback values. `--json --include-result` explicitly adds `document` and `rollback`, which can contain sensitive current and original values. Exported JSON is capped at 1 MiB; a larger explicit export fails without printing a partial result. Generated plans also must fit 1 MiB including the trailing newline. File inputs and migrated documents must fit 1 MiB and depth 64. Worker time/heap limits remain in force. A result that exceeds those bounds is not reported as verified.
 
-The source package version is 0.2.0 for these additive public exports:
+These additive public exports were introduced in 0.2.0 and remain available in 0.3.0:
 
 ```ts
 import {
@@ -209,3 +209,26 @@ if (result.status === 'verified') console.log(result.document, result.rollback);
 ```
 
 The pure migration API enforces JSON byte/depth and operation limits but remains synchronous; caller-owned process isolation is still needed for untrusted schemas. It rejects non-JSON values, cycles, proxies, accessors and non-plain objects instead of coercing them. Returned candidates and rollback snapshots are private copies. `MigrationInputError.code` is one of `invalid-input`, `invalid-plan`, `schema-mismatch`, `patch-failed`, `rollback-failed`, `plan-too-large`, with sanitized messages; schema compilation may throw the existing `ContractInputError`. In-memory rollback wrappers may exceed the source document byte size slightly; the CLI export cap applies to the complete emitted report. The existing GitHub Action remains validate/compare only; these new commands are available through the CLI/library.
+
+## M2: durable file versions (Linux/macOS, Node.js 22+)
+
+Stage a reviewed migration, publish it to a **new** file, and restore exact original bytes to another **new** file. The CLI never replaces or deletes an existing file. Use a private local directory owned by you; all transaction artifacts and output destinations must be on the same filesystem. This example uses disposable copies:
+
+```sh
+work=$(mktemp -d)
+cp examples/migration-old.json examples/migration-new.json examples/migration-operations.json examples/valid.json "$work/"
+json-statham plan "$work/migration-old.json" "$work/migration-new.json" --operations "$work/migration-operations.json" > "$work/plan.json"
+json-statham stage "$work/migration-old.json" "$work/migration-new.json" --document "$work/valid.json" --plan "$work/plan.json" --transaction "$work/transaction" --output "$work/migrated.json" --json
+json-statham inspect-transaction --transaction "$work/transaction" --json
+json-statham apply --transaction "$work/transaction" --document "$work/valid.json" --output "$work/migrated.json" --json
+json-statham restore --transaction "$work/transaction" --document "$work/migrated.json" --output "$work/restored.json" --json
+cmp "$work/valid.json" "$work/restored.json"
+```
+
+`stage` verifies source, candidate and rollback in a bounded worker before creating private snapshots and a version1 manifest. It binds exact source bytes, schemas, plan and destination. Inspect the plan for business intent before staging. First `apply` refuses a changed source revision, any existing destination, or mismatched explicit paths. `restore` requires the unchanged published version and binds one new restoration destination. Repeat the same apply/restore safely; unrelated files with identical bytes are still refused. Reports contain summaries, hashes and paths, never document values. Successful stages/applications/restores exit 0, schema rejection exits 1, and input/resource/transaction errors exit 2.
+
+The transaction directory contains **sensitive full originals, candidates, schemas and plans**. It is mode0700, immutable snapshots/metadata are mode0400, and publication payloads/outputs mode0600. Retained publication payloads share inode identity with their output; editing an output invalidates subsequent transaction checks without changing the immutable backups. Keep the complete transaction directory for inspection/recovery. Retention and deliberate cleanup belong to the caller; no automatic deletion occurs. Transaction metadata is integrity-checked, not signed authorization.
+
+Inputs must be regular, strict UTF-8 files owned by you/root, with no group/world write permission or final symlink. Ancestor directories must be trusted; root-owned sticky temporary directories are allowed. Writable destination parents must belong to you. macOS grant ACL entries are rejected even when mode bits look private; deny-only system ACL entries are allowed. Outputs cannot be inside transaction metadata. Windows, network filesystems, in-place editing and ACL/xattr replication are unsupported.
+
+Inspection is read-only. `prepared` means ready to apply; `apply-pending` means repeat the exact apply command; `restore-pending` means repeat restore with its bound destination; `applied`/`restored` mean confirmed publications. An `incomplete` stage exits 2: retain its artifacts and stage afresh with a new transaction directory. Corruption, missing/edited outputs and conflicting intents fail closed; never delete markers to force recovery. Atomic no-replace hardlinks plus file/directory syncs support interruption recovery under the local filesystem's durability contract. They do not replace filesystem backups or protect against malicious same-user/root tampering. Persistence remains a CLI feature; package-root exports and the validate/compare Action are unchanged.

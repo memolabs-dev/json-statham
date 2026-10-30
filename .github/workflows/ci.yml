@@ -22,6 +22,51 @@ jobs:
           node dist/cli.js plan examples/migration-old.json examples/migration-new.json --operations examples/migration-operations.json > "$RUNNER_TEMP/migration-plan.json"
           node dist/cli.js dry-run examples/migration-old.json examples/migration-new.json --document examples/valid.json --plan "$RUNNER_TEMP/migration-plan.json" --json > "$RUNNER_TEMP/migration-result.json"
           node --input-type=module -e 'import assert from "node:assert/strict"; import {readFileSync} from "node:fs"; const r=JSON.parse(readFileSync(process.env.RUNNER_TEMP+"/migration-result.json","utf8")); assert.equal(r.status,"verified"); assert.equal(r.rollbackVerified,true); assert.ok(!("document" in r)); assert.ok(!("rollback" in r));'
+      - name: Verify durable file versions with disposable data
+        shell: bash
+        run: |
+          work=$(mktemp -d)
+          cp examples/migration-old.json examples/migration-new.json examples/migration-operations.json examples/valid.json "$work/"
+          node dist/cli.js plan "$work/migration-old.json" "$work/migration-new.json" --operations "$work/migration-operations.json" > "$work/plan.json"
+          node dist/cli.js stage "$work/migration-old.json" "$work/migration-new.json" --document "$work/valid.json" --plan "$work/plan.json" --transaction "$work/transaction" --output "$work/migrated.json" --json
+          node dist/cli.js inspect-transaction --transaction "$work/transaction" --json
+          node dist/cli.js apply --transaction "$work/transaction" --document "$work/valid.json" --output "$work/migrated.json" --json
+          node dist/cli.js apply --transaction "$work/transaction" --document "$work/valid.json" --output "$work/migrated.json" --json
+          node dist/cli.js restore --transaction "$work/transaction" --document "$work/migrated.json" --output "$work/restored.json" --json
+          cmp "$work/valid.json" "$work/restored.json"
+      - run: npm pack --dry-run
+
+  check-macos:
+    runs-on: macos-15
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Verify documented migration workflow
+        shell: bash
+        run: |
+          node dist/cli.js plan examples/migration-old.json examples/migration-new.json --operations examples/migration-operations.json > "$RUNNER_TEMP/migration-plan.json"
+          node dist/cli.js dry-run examples/migration-old.json examples/migration-new.json --document examples/valid.json --plan "$RUNNER_TEMP/migration-plan.json" --json > "$RUNNER_TEMP/migration-result.json"
+          node --input-type=module -e 'import assert from "node:assert/strict"; import {readFileSync} from "node:fs"; const r=JSON.parse(readFileSync(process.env.RUNNER_TEMP+"/migration-result.json","utf8")); assert.equal(r.status,"verified"); assert.equal(r.rollbackVerified,true); assert.ok(!("document" in r)); assert.ok(!("rollback" in r));'
+      - name: Verify durable file versions with disposable data
+        shell: bash
+        run: |
+          work=$(mktemp -d)
+          cp examples/migration-old.json examples/migration-new.json examples/migration-operations.json examples/valid.json "$work/"
+          node dist/cli.js plan "$work/migration-old.json" "$work/migration-new.json" --operations "$work/migration-operations.json" > "$work/plan.json"
+          node dist/cli.js stage "$work/migration-old.json" "$work/migration-new.json" --document "$work/valid.json" --plan "$work/plan.json" --transaction "$work/transaction" --output "$work/migrated.json" --json
+          node dist/cli.js inspect-transaction --transaction "$work/transaction" --json
+          node dist/cli.js apply --transaction "$work/transaction" --document "$work/valid.json" --output "$work/migrated.json" --json
+          node dist/cli.js apply --transaction "$work/transaction" --document "$work/valid.json" --output "$work/migrated.json" --json
+          node dist/cli.js restore --transaction "$work/transaction" --document "$work/migrated.json" --output "$work/restored.json" --json
+          cmp "$work/valid.json" "$work/restored.json"
       - run: npm pack --dry-run
 
   action-smoke:

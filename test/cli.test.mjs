@@ -101,6 +101,8 @@ test('terminal help shows the portrait and documents both commands', () => {
     assert.match(result.stdout, /baseline/);
     assert.match(result.stdout, /dry-run/);
     assert.match(result.stdout, /--include-result/);
+    assert.match(result.stdout, /inspect-transaction/);
+    assert.match(result.stdout, /stage/);
     assert.match(result.stdout, /Your JSON has met its match/);
     assert.equal(result.stderr, '');
   }

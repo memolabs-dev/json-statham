@@ -36,3 +36,11 @@ _Avoid_: sample payload, proof of compatibility
 **Verified repair**: A simulated document accepted by the target contract, with a rollback verified to restore the exact source document.
 
 **Rollback snapshot**: A private copy of a source document represented as a root-replacement operation for restoration.
+
+**File transaction**: A durable record binding a captured source revision and migration plan to newly published file versions.
+
+**Prepared transaction**: A fully verified set of private snapshots whose manifest was published durably, before any migrated output is created.
+
+**Published version**: A new file created without replacing an existing directory entry, identified by its publication inode and content hash.
+
+**Restore intent**: A durable binding of one transaction to an explicitly chosen new restoration destination.
