@@ -39,3 +39,9 @@ Browser: Chromium via isolated agent-browser session statham-m3, actual file:// 
 Disposable evidence directory /var/folders/9l/jsy6rgt160v3z3vrkqqjhdyh0000gn/T/statham-html-review-a9fh3fth contains only synthetic artifacts/screenshots/measurements.json. No real user input used or modified.
 
 Security/standards independent reviewer reran5 CLI tests PASS, no blocker. Spec reviewer pending; exact-head CI/integration pending. R1/R2 mitigated by escape/privacy/CSP tests plus actual browser no-resource checks; R3 baseline semantics covered; R4 worker/byte limit regression; R5 measured layout/contrast/keyboard/axe mitigations. No known high/critical implementation defect. E VERIFYING, F TODO.
+
+## Technical closure — 2026-10-30
+
+A–F DONE with evidence: full82 tests/pre-commit/pack PASS; browser measurements above; independent security and spec reviews PASS. Spec reviewer also confirmed true mixed partial waiver (1 active,1 accepted, exit3) and bounded shared-prefix schemas fail closed with small error view/empty stderr. No claim of exhaustive maximal amplification or global parent heap cap;1MiB is the published artifact bound.
+
+All10 exact-head55bbc33dc4e4b5fb4b7ba2f1f3ec459cddabc1f4 push/PR checks PASS: https://github.com/memolabs-dev/json-statham/actions/runs/41085302672 and https://github.com/memolabs-dev/json-statham/actions/runs/41085279962. Real Action, installed package and Linux/macOS Node22/24 included. PR22 MERGED as1bdc4e7deaebf11c48512b6f749f456cc643f118; technical issue20 actually CLOSED completed, verified directly. Human acceptance21 OPEN. R1–R5 mitigated within stated scope; no known high/critical open risk. Status READY_FOR_MANUAL_ACCEPTANCE. Branches retained, no deployment/npm registry release, no user-data migration. README contains local save/open recipe.

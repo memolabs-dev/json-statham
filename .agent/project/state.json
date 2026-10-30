@@ -1,30 +1,30 @@
 {
-  "status": "VERIFYING",
+  "status": "READY_FOR_MANUAL_ACCEPTANCE",
   "scope": "M3 offline diagnostics (#20)",
   "tasks": {
     "A": "DONE",
     "B": "DONE",
     "C": "DONE",
     "D": "DONE",
-    "E": "VERIFYING",
-    "F": "TODO"
+    "E": "DONE",
+    "F": "DONE"
   },
   "evidence_ref": "m3-html.md",
   "verification": {
     "local": "PASS",
-    "tests": 77,
+    "tests": 82,
     "package_install_smoke": "PASS",
     "remote_ci": "PASS",
-    "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41082690971",
-    "implementation_commit": "4bf59bf0fc5e32822f20192100993fb284262497"
+    "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41085302672",
+    "implementation_commit": "55bbc33dc4e4b5fb4b7ba2f1f3ec459cddabc1f4"
   },
-  "ready_for_manual_acceptance": false,
+  "ready_for_manual_acceptance": true,
   "blockers": [],
-  "next_action": "Complete browser/security/spec verification and full gates for #20, then PR/CI/merge; M2 persistence accepted #18.",
+  "next_action": "Guillaume: offline HTML view acceptance #21. Local visualization #20 delivered/closed; persistence #18 accepted. AI/editor integrations remain separately scoped future work; do not repropose delivered features.",
   "repository": "https://github.com/memolabs-dev/json-statham",
   "technical_issue": 20,
-  "manual_acceptance_issue": null,
-  "technical_issue_status": "OPEN",
+  "manual_acceptance_issue": 21,
+  "technical_issue_status": "CLOSED",
   "changes": {
     "terminal_portrait": {
       "issue": 3,
@@ -183,16 +183,34 @@
     },
     "m3_html": {
       "issue": 20,
-      "status": "VERIFYING",
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
       "spec": "m3-html.md",
       "risk_tier": "T3",
       "local_focused_tests": "5 PASS; red-green valid/flags/baseline/byte cap via actual CLI",
-      "remote_ci": "PENDING",
+      "remote_ci": "PASS",
       "local_checks": "PASS",
       "tests": 82,
       "browser": "PASS:40 viewport/theme/state cases, zero overflow/contrast failures, axe0 violations, keyboard and no-resource proof",
-      "independent_review": "Security/standards PASS; spec pending",
-      "risk_mitigation": "R1\u2013R5 covered by CLI/browser evidence; final spec/CI gate pending"
+      "independent_review": "PASS: standards/security and specification reviewers; independently exercised5 focused CLI cases, true mixed partial baseline and bounded amplification errors. No blocking findings.",
+      "risk_mitigation": "R1\u2013R5 covered by CLI/browser evidence; final spec/CI gate pending",
+      "technical_issue_status": "CLOSED",
+      "manual_acceptance_issue": 21,
+      "manual_acceptance_status": "OPEN",
+      "tasks": {
+        "A": "DONE",
+        "B": "DONE",
+        "C": "DONE",
+        "D": "DONE",
+        "E": "DONE",
+        "F": "DONE"
+      },
+      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41085302672",
+      "pull_request": 22,
+      "integration": "MERGED",
+      "implementation_commit": "55bbc33dc4e4b5fb4b7ba2f1f3ec459cddabc1f4",
+      "merge_commit": "1bdc4e7deaebf11c48512b6f749f456cc643f118",
+      "critical_risks_open": 0,
+      "high_risks_open": 0
     }
   },
   "milestones": {
@@ -215,7 +233,17 @@
       "manual_acceptance_status": "PARTIAL: #18 CLOSED, #15 OPEN",
       "technical_status": "CLOSED",
       "manual_acceptance_issues": [15, 18]
+    },
+    "M3": {
+      "status": "IN_PROGRESS",
+      "first_slice": "offline_html",
+      "first_slice_status": "READY_FOR_MANUAL_ACCEPTANCE",
+      "technical_issue": 20,
+      "technical_issue_status": "CLOSED",
+      "manual_acceptance_issue": 21,
+      "manual_acceptance_status": "OPEN",
+      "future_scope": "Opt-in AI/editor integrations not yet specified."
     }
   },
-  "manual_acceptance_status": "PENDING"
+  "manual_acceptance_status": "OPEN"
 }
