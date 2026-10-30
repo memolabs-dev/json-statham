@@ -20,7 +20,7 @@
   },
   "ready_for_manual_acceptance": true,
   "blockers": [],
-  "next_action": "Guillaume: manual acceptance #2 (M0), #6 (Action), #9 (baselines), #12 (library API). M1 technical implementation is delivered; M2 requires its own scoped specification.",
+  "next_action": "Guillaume: pending human acceptance #2/#6/#9/#12/#15. Next M2 technical scope is #16: specify transactional persistent apply/restore before implementation. Delivered M2 proposal/dry-run/in-memory rollback #14 must not be reproposed.",
   "repository": "https://github.com/memolabs-dev/json-statham",
   "technical_issue": 1,
   "manual_acceptance_issue": 2,
@@ -116,7 +116,7 @@
     },
     "m2_dry_run": {
       "issue": 14,
-      "status": "VERIFYING",
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
       "spec": "m2-dry-run.md",
       "scope": "M2 first slice: explicit proposals, simulation and in-memory verified rollback only",
       "tasks": {
@@ -124,19 +124,26 @@
         "B": "DONE",
         "C": "DONE",
         "D": "DONE",
-        "E": "VERIFYING",
-        "F": "IN_PROGRESS"
+        "E": "DONE",
+        "F": "DONE"
       },
       "review_m1": "m1-review.md; no behavior blockers; explicit catch narrowing coverage added",
-      "evidence": "m2-dry-run.md; prior full 60 tests PASS, added proxy rejection red-green PASS; expanded full hook/CI and independent R9 confirmation pending.",
+      "evidence": "m2-dry-run.md; 61 tests/full pre-commit PASS; six exact-head CI checks PASS incl documented migration workflow on Node22/24; merged #17 and actual CLOSED #14; human #15 OPEN; remaining M2 #16 OPEN.",
       "risk_tier": "T3 (review-evidenced executable-input/prototype boundary; mitigated before publication)",
       "tests": 61,
-      "local_checks": "VERIFYING",
+      "local_checks": "PASS",
       "manual_acceptance_issue": 15,
       "remaining_m2_issue": 16,
       "critical_risks_open": 0,
       "high_risks_open": 0,
-      "independent_review": "PASS: security and spec axes; eight review findings fixed through red-green regressions and independently rechecked"
+      "independent_review": "PASS: standards/security and spec; all nine review boundary findings fixed via red-green tests and independently rechecked, including final Proxy guard",
+      "pull_request": 17,
+      "integration": "MERGED",
+      "technical_issue_status": "CLOSED",
+      "implementation_commit": "918eaaa6a1431b80dd1105d3619a229cce33636f",
+      "merge_commit": "5bd60f2ad9f89aa2f3ff0dde20f0e9caa6c95f43",
+      "remote_ci": "PASS",
+      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41051733050"
     }
   },
   "milestones": {
@@ -153,7 +160,10 @@
       "first_slice_issue": 14,
       "manual_acceptance_issue": 15,
       "remaining_technical_issues": [16],
-      "scope_note": "First slice is clone-only migration proposal/dry-run/rollback proof. Persistent apply/restore is not implemented."
+      "scope_note": "First slice is clone-only migration proposal/dry-run/rollback proof. Persistent apply/restore is not implemented.",
+      "first_slice_status": "READY_FOR_MANUAL_ACCEPTANCE",
+      "first_slice_technical_status": "CLOSED",
+      "manual_acceptance_status": "OPEN"
     }
   }
 }
