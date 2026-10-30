@@ -20,7 +20,7 @@
   },
   "ready_for_manual_acceptance": true,
   "blockers": [],
-  "next_action": "Guillaume: perform README workflow acceptance and record outcome in issue #2.",
+  "next_action": "Guillaume: M0 CLI/portrait acceptance in #2 and consuming GitHub Action acceptance in #6. Future M1 slices: baselines and stable library API.",
   "repository": "https://github.com/memolabs-dev/json-statham",
   "technical_issue": 1,
   "manual_acceptance_issue": 2,
@@ -41,19 +41,28 @@
     },
     "github_action": {
       "issue": 5,
-      "status": "VERIFYING",
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
       "spec": "github-action.md",
       "tasks": {
         "A": "DONE",
         "B": "DONE",
         "C": "DONE",
         "D": "DONE",
-        "E": "VERIFYING",
-        "F": "IN_PROGRESS"
+        "E": "DONE",
+        "F": "DONE"
       },
-      "evidence": "github-action.md; npm run check PASS (26 tests), npm pack --dry-run PASS; independent review and composite remote CI pending.",
+      "evidence": "github-action.md; local/pre-commit full checks 26 tests; real composite success, rejection and comparison outputs verified by GitHub CI.",
       "local_checks": "PASS",
-      "tests": 26
+      "tests": 26,
+      "manual_acceptance_issue": 6,
+      "technical_issue_status": "CLOSED",
+      "pull_request": 7,
+      "integration": "MERGED",
+      "implementation_commit": "112cb3091841ec59cfd36adcb404a15e8eab9b2e",
+      "merge_commit": "2848932b9d3f321372d4d06f78d017043fa0dd4f",
+      "remote_ci": "PASS",
+      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41045582300",
+      "independent_review": "PASS: read-only reviewer reran all 9 Action process tests; no blocking findings"
     }
   }
 }
