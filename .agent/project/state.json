@@ -24,5 +24,20 @@
   "repository": "https://github.com/memolabs-dev/json-statham",
   "technical_issue": 1,
   "manual_acceptance_issue": 2,
-  "technical_issue_status": "CLOSED"
+  "technical_issue_status": "CLOSED",
+  "changes": {
+    "terminal_portrait": {
+      "issue": 3,
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
+      "spec": "terminal-portrait.md",
+      "local_checks": "PASS",
+      "tests": 17,
+      "remote_ci": "PASS",
+      "manual_acceptance_issue": 2,
+      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41044566222",
+      "implementation_commit": "3ed0bbd",
+      "pull_request": 4,
+      "integration": "Live integration status: https://github.com/memolabs-dev/json-statham/pull/4"
+    }
+  }
 }
