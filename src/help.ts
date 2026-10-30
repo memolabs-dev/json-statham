@@ -27,8 +27,8 @@ const portrait = String.raw`
 export function renderHelp(): string {
   return `${portrait}
 Usage:
-  json-statham validate <schema> <document> [--json]
-  json-statham compare <old-schema> <new-schema> [--json] [--baseline file]
+  json-statham validate <schema> <document> [--json | --html]
+  json-statham compare <old-schema> <new-schema> [--json | --html] [--baseline file]
   json-statham baseline <old-schema> <new-schema> [--json]
   json-statham plan <old-schema> <new-schema> --operations <patch-file>
   json-statham dry-run <old-schema> <new-schema> --document <file> --plan <file> [--json [--include-result]]
@@ -38,6 +38,7 @@ Usage:
   json-statham inspect-transaction --transaction <dir> [--json]
   json-statham --help
 
+  --html     Emit a self-contained offline view (validate/compare only).
   --json     Emit one machine-readable report without artwork.
   --baseline Accept reviewed findings for an exact comparison (compare only).
   --include-result Export candidate and rollback values (dry-run with --json).

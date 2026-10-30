@@ -44,3 +44,5 @@ _Avoid_: sample payload, proof of compatibility
 **Published version**: A new file created without replacing an existing directory entry, identified by its publication inode and content hash.
 
 **Restore intent**: A durable binding of one transaction to an explicitly chosen new restoration destination.
+
+**Diagnostic view**: An offline presentation of a contract check, preserving diagnostic/waiver meanings without embedding input values.

@@ -1,17 +1,15 @@
 {
-  "status": "DONE",
-  "scope": "M2 persistent file versions (#16)",
+  "status": "VERIFYING",
+  "scope": "M3 offline diagnostics (#20)",
   "tasks": {
     "A": "DONE",
     "B": "DONE",
     "C": "DONE",
     "D": "DONE",
-    "E": "DONE",
-    "F": "DONE",
-    "G": "DONE",
-    "H": "DONE"
+    "E": "VERIFYING",
+    "F": "TODO"
   },
-  "evidence_ref": "m2-persistence.md",
+  "evidence_ref": "m3-html.md",
   "verification": {
     "local": "PASS",
     "tests": 77,
@@ -22,11 +20,11 @@
   },
   "ready_for_manual_acceptance": false,
   "blockers": [],
-  "next_action": "M2 persistence accepted by Guillaume (#18 CLOSED completed, 2026-10-30T15:49:58Z). M3 first slice selection in progress; older human acceptance #2/#6/#9/#12/#15 remains open, not an implementation blocker.",
+  "next_action": "Complete browser/security/spec verification and full gates for #20, then PR/CI/merge; M2 persistence accepted #18.",
   "repository": "https://github.com/memolabs-dev/json-statham",
-  "technical_issue": 16,
-  "manual_acceptance_issue": 18,
-  "technical_issue_status": "CLOSED",
+  "technical_issue": 20,
+  "manual_acceptance_issue": null,
+  "technical_issue_status": "OPEN",
   "changes": {
     "terminal_portrait": {
       "issue": 3,
@@ -182,6 +180,19 @@
         "closed_at": "2026-10-30T15:49:58Z",
         "owner_confirmation": "User: Non c\u2019est bon j\u2019ai clos continues"
       }
+    },
+    "m3_html": {
+      "issue": 20,
+      "status": "VERIFYING",
+      "spec": "m3-html.md",
+      "risk_tier": "T3",
+      "local_focused_tests": "5 PASS; red-green valid/flags/baseline/byte cap via actual CLI",
+      "remote_ci": "PENDING",
+      "local_checks": "PASS",
+      "tests": 82,
+      "browser": "PASS:40 viewport/theme/state cases, zero overflow/contrast failures, axe0 violations, keyboard and no-resource proof",
+      "independent_review": "Security/standards PASS; spec pending",
+      "risk_mitigation": "R1\u2013R5 covered by CLI/browser evidence; final spec/CI gate pending"
     }
   },
   "milestones": {
@@ -206,5 +217,5 @@
       "manual_acceptance_issues": [15, 18]
     }
   },
-  "manual_acceptance_status": "CLOSED"
+  "manual_acceptance_status": "PENDING"
 }
