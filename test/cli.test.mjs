@@ -99,6 +99,8 @@ test('terminal help shows the portrait and documents both commands', () => {
     assert.match(result.stdout, /validate/);
     assert.match(result.stdout, /compare/);
     assert.match(result.stdout, /baseline/);
+    assert.match(result.stdout, /dry-run/);
+    assert.match(result.stdout, /--include-result/);
     assert.match(result.stdout, /Your JSON has met its match/);
     assert.equal(result.stderr, '');
   }
@@ -291,6 +293,215 @@ test('baseline generation fails explicitly when its artifact cannot be loaded wi
     assert.equal(report.status, 'error');
     assert.equal(report.diagnostics[0].code, 'baseline-too-large');
     assert.match(report.diagnostics[0].message, /1 MiB/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('CLI migration proposals and dry-runs preserve files and redact results unless explicitly exported', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'statham-migrate-'));
+  try {
+    const old = join(dir, 'old.json'),
+      next = join(dir, 'new.json'),
+      ops = join(dir, 'ops.json'),
+      plan = join(dir, 'plan.json'),
+      data = join(dir, 'data.json');
+    writeFileSync(old, JSON.stringify({ type: 'object' }));
+    writeFileSync(
+      next,
+      JSON.stringify({
+        type: 'object',
+        properties: { active: { type: 'boolean' } },
+        required: ['active'],
+      }),
+    );
+    writeFileSync(
+      ops,
+      JSON.stringify([{ op: 'add', path: '/active', value: true }]),
+    );
+    writeFileSync(data, JSON.stringify({ token: 'SECRET' }));
+    const generated = cli('plan', old, next, '--operations', ops, '--json');
+    assert.equal(generated.status, 0, generated.stdout);
+    writeFileSync(plan, generated.stdout);
+    const original = [old, next, ops, plan, data].map((file) =>
+      readFileSync(file, 'utf8'),
+    );
+    const run = cli(
+      'dry-run',
+      old,
+      next,
+      '--document',
+      data,
+      '--plan',
+      plan,
+      '--json',
+    );
+    assert.equal(run.status, 0, run.stdout);
+    assert.deepEqual(JSON.parse(run.stdout), {
+      status: 'verified',
+      diagnostics: [],
+      operationCount: 1,
+      rollbackVerified: true,
+    });
+    assert.ok(!run.stdout.includes('SECRET'));
+    const exported = cli(
+      'dry-run',
+      old,
+      next,
+      '--document',
+      data,
+      '--plan',
+      plan,
+      '--json',
+      '--include-result',
+    );
+    assert.equal(exported.status, 0);
+    assert.deepEqual(JSON.parse(exported.stdout).document, {
+      token: 'SECRET',
+      active: true,
+    });
+    assert.deepEqual(JSON.parse(exported.stdout).rollback, [
+      { op: 'replace', path: '', value: { token: 'SECRET' } },
+    ]);
+    assert.deepEqual(
+      [old, next, ops, plan, data].map((file) => readFileSync(file, 'utf8')),
+      original,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('migration CLI rejects invalid phases, stale plans, unsafe flags and oversized plan artifacts', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'statham-migration-errors-'));
+  try {
+    const old = join(dir, 'old.json'),
+      next = join(dir, 'new.json'),
+      ops = join(dir, 'ops.json'),
+      data = join(dir, 'data.json'),
+      plan = join(dir, 'plan.json');
+    writeFileSync(old, JSON.stringify({ type: 'object' }));
+    writeFileSync(
+      next,
+      JSON.stringify({ type: 'object', required: ['active'] }),
+    );
+    writeFileSync(ops, '[]');
+    writeFileSync(data, '{}');
+    writeFileSync(plan, cli('plan', old, next, '--operations', ops).stdout);
+    const rejected = cli(
+      'dry-run',
+      old,
+      next,
+      '--document',
+      data,
+      '--plan',
+      plan,
+      '--json',
+    );
+    assert.equal(rejected.status, 1);
+    assert.equal(JSON.parse(rejected.stdout).phase, 'target');
+    writeFileSync(data, '1');
+    assert.equal(
+      JSON.parse(
+        cli('dry-run', old, next, '--document', data, '--plan', plan, '--json')
+          .stdout,
+      ).phase,
+      'source',
+    );
+    writeFileSync(next, JSON.stringify({ type: 'object', title: 'changed' }));
+    const stale = cli(
+      'dry-run',
+      old,
+      next,
+      '--document',
+      data,
+      '--plan',
+      plan,
+      '--json',
+    );
+    assert.equal(stale.status, 2);
+    assert.equal(
+      JSON.parse(stale.stdout).diagnostics[0].code,
+      'schema-mismatch',
+    );
+    for (const args of [
+      ['plan', old, next],
+      ['plan', old, next, '--operations', ops, '--operations', ops],
+      ['dry-run', old, next, '--plan', plan],
+      ['validate', old, data, '--plan', plan],
+      [
+        'dry-run',
+        old,
+        next,
+        '--document',
+        data,
+        '--plan',
+        plan,
+        '--include-result',
+      ],
+      ['compare', old, next, '--include-result', '--json'],
+      ['plan', old, next, '--operations', ops, '--baseline', plan],
+    ])
+      assert.equal(cli(...args).status, 2);
+    writeFileSync(
+      ops,
+      JSON.stringify([
+        { op: 'add', path: '/blob', value: 'x'.repeat(1048576 - 100) },
+      ]),
+    );
+    const large = cli('plan', old, next, '--operations', ops, '--json');
+    assert.equal(large.status, 2);
+    assert.equal(
+      JSON.parse(large.stdout).diagnostics[0].code,
+      'plan-too-large',
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('migration CLI never emits a plan that exceeds its own loader depth bound', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'statham-plan-depth-'));
+  try {
+    const schema = join(dir, 'schema.json'),
+      ops = join(dir, 'ops.json'),
+      plan = join(dir, 'plan.json'),
+      data = join(dir, 'data.json');
+    writeFileSync(schema, 'true');
+    writeFileSync(data, '{}');
+    for (const levels of [62, 61]) {
+      let value = 0;
+      for (let i = 0; i < levels; i++) value = { x: value };
+      writeFileSync(ops, JSON.stringify([{ op: 'replace', path: '', value }]));
+      const generated = cli(
+        'plan',
+        schema,
+        schema,
+        '--operations',
+        ops,
+        '--json',
+      );
+      if (levels === 62) {
+        assert.equal(generated.status, 2);
+        assert.equal(JSON.parse(generated.stdout).status, 'error');
+      } else {
+        assert.equal(generated.status, 0);
+        writeFileSync(plan, generated.stdout);
+        assert.equal(
+          cli(
+            'dry-run',
+            schema,
+            schema,
+            '--document',
+            data,
+            '--plan',
+            plan,
+            '--json',
+          ).status,
+          0,
+        );
+      }
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

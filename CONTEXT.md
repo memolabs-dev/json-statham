@@ -28,3 +28,11 @@ _Avoid_: sample payload, proof of compatibility
 **Accepted diagnostic**: A potential breaking change explicitly included in a matching baseline, retained for review but excluded from the failure gate.
 
 **Stale baseline**: A baseline whose contract pair no longer matches the comparison; it grants no acceptance.
+
+**Migration plan**: A proposal binding explicitly chosen document operations to one exact pair of source and target contracts.
+
+**Dry-run**: A migration simulated on copies, with its outcome checked before any persistent change.
+
+**Verified repair**: A simulated document accepted by the target contract, with a rollback verified to restore the exact source document.
+
+**Rollback snapshot**: A private copy of a source document represented as a root-replacement operation for restoration.

@@ -1,5 +1,6 @@
 import { openSync, closeSync, fstatSync, readSync } from 'node:fs';
-export const MAX_INPUT_BYTES = 1024 * 1024;
+import { MAX_INPUT_BYTES, MAX_DEPTH } from './limits.js';
+export { MAX_INPUT_BYTES } from './limits.js';
 export function loadJson(path: string): unknown {
   const fd = openSync(path, 'r');
   try {
@@ -24,7 +25,7 @@ export function loadJson(path: string): unknown {
   }
 }
 function checkDepth(value: unknown, depth = 0): void {
-  if (depth > 64) throw new Error('Nesting limit exceeded.');
+  if (depth > MAX_DEPTH) throw new Error('Nesting limit exceeded.');
   if (value && typeof value === 'object') {
     for (const child of Object.values(value)) checkDepth(child, depth + 1);
   }

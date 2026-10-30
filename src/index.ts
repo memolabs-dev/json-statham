@@ -12,3 +12,15 @@ export type {
   Baseline,
   InputErrorCode,
 } from './core.js';
+
+export {
+  createMigrationPlan,
+  MigrationInputError,
+  dryRunMigration,
+} from './migration.js';
+export type {
+  MigrationPlan,
+  MigrationOperation,
+  MigrationErrorCode,
+  MigrationReport,
+} from './migration.js';
