@@ -128,10 +128,10 @@
         "F": "IN_PROGRESS"
       },
       "review_m1": "m1-review.md; no behavior blockers; explicit catch narrowing coverage added",
-      "evidence": "m2-dry-run.md; 60 tests and pack dry run PASS; exact-head remote CI/integration still pending.",
+      "evidence": "m2-dry-run.md; prior full 60 tests PASS, added proxy rejection red-green PASS; expanded full hook/CI and independent R9 confirmation pending.",
       "risk_tier": "T3 (review-evidenced executable-input/prototype boundary; mitigated before publication)",
-      "tests": 60,
-      "local_checks": "PASS",
+      "tests": 61,
+      "local_checks": "VERIFYING",
       "manual_acceptance_issue": 15,
       "remaining_m2_issue": 16,
       "critical_risks_open": 0,

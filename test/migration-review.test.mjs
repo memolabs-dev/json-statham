@@ -173,3 +173,22 @@ test('complete plan depth is checked before generation succeeds', () => {
   ]);
   assert.equal(dryRunMigration(true, true, {}, plan).status, 'verified');
 });
+
+test('non-JSON proxy payloads are rejected before executing reflection traps', () => {
+  let called = 0;
+  const value = new Proxy(
+    { safe: 1 },
+    {
+      getPrototypeOf() {
+        called++;
+        return Object.prototype;
+      },
+    },
+  );
+  assert.throws(
+    () =>
+      createMigrationPlan(true, true, [{ op: 'add', path: '/value', value }]),
+    (e) => e instanceof MigrationInputError && e.code === 'invalid-input',
+  );
+  assert.equal(called, 0);
+});

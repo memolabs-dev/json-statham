@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { types } from 'node:util';
 import { MAX_INPUT_BYTES, MAX_DEPTH } from './limits.js';
 export const canonical = (value: unknown): string =>
   JSON.stringify(value, (_key, item) =>
@@ -27,6 +28,7 @@ export function cloneJson(value: unknown): unknown {
       return;
     if (typeof item !== 'object' || ancestors.has(item))
       throw new Error('Not JSON.');
+    if (types.isProxy(item)) throw new Error('Not plain JSON.');
     if (Array.isArray(item) && Object.getPrototypeOf(item) !== Array.prototype)
       throw new Error('Not a plain JSON array.');
     if (
