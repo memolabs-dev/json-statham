@@ -7,6 +7,7 @@ import {
   TransactionError,
   type TransactionReport,
 } from './transaction.js';
+import { renderHtml } from './html.js';
 import { renderHelp } from './help.js';
 interface CliReport {
   status:
@@ -67,14 +68,19 @@ const valuedOptions = new Set(
 );
 const args = process.argv.slice(2);
 const json = args.includes('--json');
+const html = args.includes('--html');
 const positional: string[] = [];
 const paths: Record<string, string> = {};
 let includeResult = false;
 let invalidOptions = false;
 let seenJson = false;
+let seenHtml = false;
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
-  if (arg === '--json') {
+  if (arg === '--html') {
+    if (seenHtml) invalidOptions = true;
+    seenHtml = true;
+  } else if (arg === '--json') {
     if (seenJson) invalidOptions = true;
     seenJson = true;
   } else if (valuedOptions.has(arg)) {
@@ -93,7 +99,8 @@ const persistent = spec?.persistent === true;
 if (
   Object.keys(paths).some((key) => !spec?.paths.includes(key)) ||
   spec?.required.some((key) => !paths[key]) ||
-  (includeResult && (command !== 'dry-run' || !json))
+  (includeResult && (command !== 'dry-run' || !json)) ||
+  (html && (json || !['validate', 'compare'].includes(command)))
 )
   invalidOptions = true;
 function output(report: CliReport | Baseline | MigrationPlan): void {
@@ -103,10 +110,30 @@ function output(report: CliReport | Baseline | MigrationPlan): void {
     return;
   }
 
+  let htmlView: string | undefined;
+  if (html && !json) {
+    htmlView = renderHtml(report, command);
+    if (Buffer.byteLength(htmlView + '\n') > 1048576) {
+      report = {
+        status: 'error',
+        diagnostics: [
+          {
+            code: 'report-too-large',
+            path: '',
+            message:
+              'HTML report exceeds 1 MiB; reduce the check scope or use --json.',
+          },
+        ],
+      };
+      htmlView = renderHtml(report, command);
+    }
+  }
   console.log(
-    json
-      ? JSON.stringify(report)
-      : `${report.status}\n${report.diagnostics.map((d) => `${d.path || '(root)'}: ${d.message}`).join('\n')}${report.transaction ? `\nTransaction: ${JSON.stringify(report.transaction)}${report.output ? `\nOutput: ${JSON.stringify(report.output)}` : ''}\nNext: ${report.nextAction}` : ''}${report.rollbackVerified !== undefined ? `\nRollback verified: ${report.rollbackVerified}.` : ''}${report.baseline ? `\nAccepted baseline diagnostics: ${report.baseline.accepted}.${report.baseline.stale ? ' Baseline is stale; all findings remain active.' : ''}` : ''}`,
+    htmlView !== undefined
+      ? htmlView
+      : json
+        ? JSON.stringify(report)
+        : `${report.status}\n${report.diagnostics.map((d) => `${d.path || '(root)'}: ${d.message}`).join('\n')}${report.transaction ? `\nTransaction: ${JSON.stringify(report.transaction)}${report.output ? `\nOutput: ${JSON.stringify(report.output)}` : ''}\nNext: ${report.nextAction}` : ''}${report.rollbackVerified !== undefined ? `\nRollback verified: ${report.rollbackVerified}.` : ''}${report.baseline ? `\nAccepted baseline diagnostics: ${report.baseline.accepted}.${report.baseline.stale ? ' Baseline is stale; all findings remain active.' : ''}` : ''}`,
   );
   process.exitCode =
     report.status === 'error' || report.status === 'incomplete'

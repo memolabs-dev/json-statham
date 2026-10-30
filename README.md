@@ -111,7 +111,7 @@ For the GitHub Action, add `baseline: path/to/accepted-baseline.json` alongside 
 
 ## Library API (ESM, Node.js 22+)
 
-Build an installable artifact from this repository with `npm ci` and `npm pack`, then install the resulting `json-statham-0.3.0.tgz` into your consumer with `npm install /path/to/json-statham-0.3.0.tgz`. Packing builds the package; importing it does not initialize the CLI or install hooks. Registry publication is a separate release action.
+Build an installable artifact from this repository with `npm ci` and `npm pack`, then install the resulting `json-statham-0.4.0.tgz` into your consumer with `npm install /path/to/json-statham-0.4.0.tgz`. Packing builds the package; importing it does not initialize the CLI or install hooks. Registry publication is a separate release action.
 
 ```ts
 import {
@@ -232,3 +232,20 @@ The transaction directory contains **sensitive full originals, candidates, schem
 Inputs must be regular, strict UTF-8 files owned by you/root, with no group/world write permission or final symlink. Ancestor directories must be trusted; root-owned sticky temporary directories are allowed. Writable destination parents must belong to you. macOS grant ACL entries are rejected even when mode bits look private; deny-only system ACL entries are allowed. Outputs cannot be inside transaction metadata. Windows, network filesystems, in-place editing and ACL/xattr replication are unsupported.
 
 Inspection is read-only. `prepared` means ready to apply; `apply-pending` means repeat the exact apply command; `restore-pending` means repeat restore with its bound destination; `applied`/`restored` mean confirmed publications. An `incomplete` stage exits 2: retain its artifacts and stage afresh with a new transaction directory. Corruption, missing/edited outputs and conflicting intents fail closed; never delete markers to force recovery. Atomic no-replace hardlinks plus file/directory syncs support interruption recovery under the local filesystem's durability contract. They do not replace filesystem backups or protect against malicious same-user/root tampering. Persistence remains a CLI feature; package-root exports and the validate/compare Action are unchanged.
+
+## Offline diagnostic views (M3)
+
+Add `--html` to validation or comparison, save stdout, then open the HTML file in your browser. The view has no JavaScript, server, telemetry, fonts or external resources. It works offline, adapts to light/dark mode and prints. For example:
+
+```sh
+json-statham validate examples/schema.json examples/invalid.json --html > validation-report.html
+# Expected exit 1: a rejected document still fails the check.
+json-statham compare examples/schema.json examples/next-schema.json --html > comparison-report.html
+# Expected exit 3: review potentially breaking changes.
+```
+
+Shell redirection creates or overwrites the chosen file; select that destination deliberately. The CLI itself only emits stdout and never edits inputs or launches a browser. Use your browser's Open File command. Status and exit codes match the text/JSON checks: 0 success, 1 rejected document, 2 input/resource/usage error, 3 potentially breaking change. Errors also produce complete HTML; reports exceeding 1 MiB are replaced by a small `report-too-large` HTML error with exit2, without partial findings.
+
+`compare --baseline reviewed.json --html` separates active findings from accepted findings in an expandable section. A stale baseline grants no waiver and is prominently identified. Acceptance does not prove compatibility; the comparison remains conservative. Views omit document/schema values, filenames and synthetic counterexamples, but diagnostic paths can reveal property names. Review before sharing. Untrusted diagnostic text is escaped, and a restrictive content security policy permits only the bundled stylesheet.
+
+`--html` and `--json` are mutually exclusive. Duplicate `--html` and uses with baseline generation, migration or transaction commands are usage errors. If both formats are requested, the usage error is JSON. Existing library exports and the GitHub Action remain unchanged. This first M3 slice provides local visualization; AI and editor integrations remain separate work.
