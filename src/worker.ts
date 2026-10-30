@@ -1,17 +1,41 @@
 import { parentPort, workerData } from 'node:worker_threads';
-import { validate, compare } from './core.js';
-import { loadJson } from './loader.js';
+import { validate, compare, createBaseline } from './core.js';
+import { loadJson, MAX_INPUT_BYTES } from './loader.js';
 try {
-  const { command, first, second } = workerData as {
+  const { command, first, second, baselinePath } = workerData as {
     command: string;
     first: string;
     second: string;
+    baselinePath?: string;
   };
   const left = loadJson(first),
     right = loadJson(second);
-  parentPort!.postMessage(
-    command === 'validate' ? validate(left, right) : compare(left, right),
-  );
+  const report =
+    command === 'validate'
+      ? validate(left, right)
+      : command === 'baseline'
+        ? createBaseline(left, right)
+        : compare(
+            left,
+            right,
+            baselinePath === undefined ? undefined : loadJson(baselinePath),
+          );
+  if (
+    command === 'baseline' &&
+    Buffer.byteLength(JSON.stringify(report) + '\n', 'utf8') > MAX_INPUT_BYTES
+  ) {
+    parentPort!.postMessage({
+      status: 'error',
+      diagnostics: [
+        {
+          code: 'baseline-too-large',
+          path: '',
+          message:
+            'Generated baseline exceeds 1 MiB; reduce the comparison scope before accepting findings.',
+        },
+      ],
+    });
+  } else parentPort!.postMessage(report);
 } catch {
   parentPort!.postMessage({
     status: 'error',

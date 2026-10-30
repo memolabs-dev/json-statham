@@ -1,20 +1,42 @@
 #!/usr/bin/env node
 import { Worker } from 'node:worker_threads';
-import type { Report } from './core.js';
+import type { Report, Baseline } from './core.js';
 import { renderHelp } from './help.js';
 interface CliReport {
   status: Report['status'] | 'error';
   diagnostics: Report['diagnostics'];
+  baseline?: { stale: boolean; accepted: number };
 }
 const args = process.argv.slice(2);
 const json = args.includes('--json');
-const positional = args.filter((arg) => arg !== '--json');
+const positional: string[] = [];
+let baselinePath: string | undefined;
+let invalidOptions = false;
+let seenJson = false;
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg === '--json') {
+    if (seenJson) invalidOptions = true;
+    seenJson = true;
+  } else if (arg === '--baseline') {
+    const next = args[++i];
+    if (baselinePath !== undefined || !next || next.startsWith('--'))
+      invalidOptions = true;
+    else baselinePath = next;
+  } else positional.push(arg);
+}
 const [command, first, second] = positional;
-function output(report: CliReport): void {
+function output(report: CliReport | Baseline): void {
+  if ('version' in report) {
+    console.log(JSON.stringify(report));
+    process.exitCode = 0;
+    return;
+  }
+
   console.log(
     json
       ? JSON.stringify(report)
-      : `${report.status}\n${report.diagnostics.map((d) => `${d.path || '(root)'}: ${d.message}`).join('\n')}`,
+      : `${report.status}\n${report.diagnostics.map((d) => `${d.path || '(root)'}: ${d.message}`).join('\n')}${report.baseline ? `\nAccepted baseline diagnostics: ${report.baseline.accepted}.${report.baseline.stale ? ' Baseline is stale; all findings remain active.' : ''}` : ''}`,
   );
   process.exitCode =
     report.status === 'error'
@@ -33,8 +55,9 @@ if (
   process.exitCode = args.length === 0 ? 2 : 0;
 } else if (
   positional.length !== 3 ||
-  !['validate', 'compare'].includes(command) ||
-  args.filter((a) => a === '--json').length > 1
+  !['validate', 'compare', 'baseline'].includes(command) ||
+  invalidOptions ||
+  (baselinePath !== undefined && command !== 'compare')
 ) {
   output({
     status: 'error',
@@ -43,17 +66,17 @@ if (
         code: 'usage',
         path: '',
         message:
-          'Usage: json-statham <validate|compare> <schema|old> <document|new> [--json]',
+          'Usage: json-statham <validate|compare|baseline> <schema|old> <document|new> [--json] [--baseline file (compare only)]',
       },
     ],
   });
 } else {
   const worker = new Worker(new URL('./worker.js', import.meta.url), {
-    workerData: { command, first, second },
+    workerData: { command, first, second, baselinePath },
     resourceLimits: { maxOldGenerationSizeMb: 128, stackSizeMb: 4 },
   });
   let finished = false;
-  function finish(report: CliReport): void {
+  function finish(report: CliReport | Baseline): void {
     if (finished) return;
     finished = true;
     clearTimeout(timer);

@@ -1,0 +1,26 @@
+# M1 comparison baselines — T2
+
+Scope: explicit acceptance of findings for an exact old→new schema pair. No automatic mutation, baseline refresh or validation bypass. Stable library API remains a later slice.
+
+Domain: baseline records reviewed acceptance; it never proves compatibility. Its scope is the canonical pair of contracts, including annotations and array ordering. Object key order is irrelevant. A changed pair makes it stale.
+
+Requirements and acceptance:
+
+- BL-1: createBaseline(before,after) returns version 1, SHA-256 comparison identity and sorted unique accepted diagnostic IDs; no schema/document values or property names stored. Both schemas validated even if identical. Deterministic and pure.
+- BL-2: compare(before,after,baseline) suppresses only matching accepted IDs for an identical pair. acceptedDiagnostics remains visible. All findings accepted → status accepted/exit 0; partial acceptance keeps potentially-breaking/exit 3; stale baseline accepts nothing and exposes stale=true. Unchanged schemas retain unchanged status.
+- BL-3: reject malformed/unsupported baseline shapes, hash strings, duplicate IDs and extra fields with input error (CLI exit 2). Baseline input has same 1 MiB/depth/resource bounds as other inputs. Unknown accepted IDs do not suppress findings.
+- BL-4: CLI baseline old new emits JSON to stdout and returns 0, never writes files; compare --baseline file consumes it. Reject flag misuse, missing/duplicate options and unsupported command combinations. Reports show accepted diagnostics/count and stale notice, including human output.
+- BL-5: Action baseline input works only for compare, through env and argv, retains existing output and injection guarantees; real composite CI exercises accepted comparison. Existing contracts without baseline unchanged.
+
+Graph: A specification → B baseline identity/redaction → C matching/partial/stale/rejection → D CLI generator/parser/worker → E Action integration/docs/CI → F independent review, full gates, merge and ticket reconciliation.
+Verification: vertical red/green at confirmed core, CLI and Action runner seams; unit/integration examples, actual file roundtrip, hashes changing on constraint values, real composite smoke, npm run check, package dry run. No test-specific runtime bypass.
+Risks: intentional user approval can waive a real rupture; explicit accepted status, visible accepted diagnostics and exact-pair scoping prevent silent compatibility claims. Canonical hash isn't a signature or authorization mechanism; reviewed baseline files must be protected by the consuming repository's review process. Stale baselines retain all findings. CLI worker limits unchanged. No new network/auth/deployment boundary.
+Status: IMPLEMENTING; evidence pending. Manual acceptance: generate baseline to a file by explicit shell redirection, inspect it, compare with it, then change a schema and confirm the baseline becomes stale and blocks again.
+
+Local evidence: focused red-green cycles covered missing baseline generation, missing accepted state, malformed input rejection, missing CLI generator/flag roundtrip, missing Action forwarding and help documentation. Stale constraints and partial/unknown acceptance were exercised through the public core, with real file loading and baseline flag misuse in CLI tests. `npm run check` PASS (35 tests: 15 core, 10 CLI, 10 Action), including all prior behavior and resource/injection tests. `npm pack --dry-run` and `git diff --check` PASS. Real composite accepted-baseline workflow and independent review remain pending.
+
+Review-discovered required defect BL-6: generated baseline artifacts can exceed the 1 MiB input bound even when both schemas fit (17,000 added boolean definitions). A successful CLI artifact must be reusable under the documented loader limit. Add a generation-time size check: if its UTF-8 serialized JSON plus newline exceeds 1 MiB, return explicit baseline-too-large/exit 2 with no baseline artifact. Verify with actual CLI fixture. This is required for D, not deferred debt.
+
+Review-discovered required defect BL-7: the new baseline CLI command must not be usable as an Action command. The Action is validate/compare only; fail before spawning a generator, emitting exactly one error report and error outputs. Add regression against baseline command and enforce runner allowlist.
+
+Review resolution: BL-6 regression first reproduced CLI exit 0 with an oversized successful artifact; now PASS with explicit baseline-too-large/exit 2 and a shared loader byte limit including trailing newline. BL-7 regression first reproduced mixed undefined/success/error outputs from the Action generator; now PASS with validate/compare allowlist before spawn. Both fixes were independently inspected and process regressions independently rerun: no remaining blocking findings. Final local `npm run check` PASS: 37 tests (15 core, 11 CLI, 11 Action). Real composite CI and merge remain pending; human acceptance is #9.

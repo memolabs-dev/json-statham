@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -98,6 +98,7 @@ test('terminal help shows the portrait and documents both commands', () => {
     assert.match(result.stdout, /JSON STATHAM/);
     assert.match(result.stdout, /validate/);
     assert.match(result.stdout, /compare/);
+    assert.match(result.stdout, /baseline/);
     assert.match(result.stdout, /Your JSON has met its match/);
     assert.equal(result.stderr, '');
   }
@@ -124,4 +125,173 @@ test('portrait never contaminates machine reports or normal validation', () => {
   const result = cli('validate', 'examples/schema.json', 'examples/valid.json');
   assert.equal(result.status, 0);
   assert.ok(!result.stdout.includes('JSON STATHAM'));
+});
+
+test('CLI generates a baseline explicitly and reads it without changing input files', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'statham-baseline-'));
+  try {
+    const generated = cli(
+      'baseline',
+      'examples/schema.json',
+      'examples/next-schema.json',
+      '--json',
+    );
+    assert.equal(generated.status, 0, generated.stderr);
+    const baseline = JSON.parse(generated.stdout);
+    assert.equal(baseline.version, 1);
+    const file = join(dir, 'baseline.json');
+    writeFileSync(file, generated.stdout);
+    const result = cli(
+      'compare',
+      'examples/schema.json',
+      'examples/next-schema.json',
+      '--baseline',
+      file,
+      '--json',
+    );
+    assert.equal(result.status, 0);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, 'accepted');
+    assert.equal(report.acceptedDiagnostics.length, 1);
+    assert.deepEqual(report.diagnostics, []);
+    const human = cli(
+      'compare',
+      'examples/schema.json',
+      'examples/next-schema.json',
+      '--baseline',
+      file,
+    );
+    assert.match(human.stdout, /Accepted baseline diagnostics: 1/);
+    assert.equal(readFileSync(file, 'utf8'), generated.stdout);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('stale baselines keep CLI failures active and malformed files fail closed', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'statham-stale-'));
+  try {
+    const baseline = join(dir, 'baseline.json'),
+      changed = join(dir, 'changed.json');
+    const generated = cli(
+      'baseline',
+      'examples/schema.json',
+      'examples/next-schema.json',
+    );
+    assert.equal(generated.status, 0);
+    writeFileSync(baseline, generated.stdout);
+    const next = JSON.parse(readFileSync('examples/next-schema.json', 'utf8'));
+    next.properties.name.minLength = 2;
+    writeFileSync(changed, JSON.stringify(next));
+    const stale = cli(
+      'compare',
+      'examples/schema.json',
+      changed,
+      '--baseline',
+      baseline,
+      '--json',
+    );
+    assert.equal(stale.status, 3);
+    assert.deepEqual(JSON.parse(stale.stdout).baseline, {
+      stale: true,
+      accepted: 0,
+    });
+    assert.match(
+      cli('compare', 'examples/schema.json', changed, '--baseline', baseline)
+        .stdout,
+      /Baseline is stale/,
+    );
+    for (const content of [
+      'null',
+      '{}',
+      '{"SECRET":',
+      JSON.stringify('x'.repeat(1048576)),
+      '['.repeat(70) + '0' + ']'.repeat(70),
+    ]) {
+      writeFileSync(baseline, content);
+      const result = cli(
+        'compare',
+        'examples/schema.json',
+        changed,
+        '--baseline',
+        baseline,
+        '--json',
+      );
+      assert.equal(result.status, 2);
+      assert.equal(JSON.parse(result.stdout).status, 'error');
+      assert.ok(!result.stdout.includes('SECRET'));
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+test('baseline flags reject misuse, duplicates and missing paths', () => {
+  for (const args of [
+    [
+      'compare',
+      'examples/schema.json',
+      'examples/next-schema.json',
+      '--baseline',
+    ],
+    [
+      'compare',
+      'examples/schema.json',
+      'examples/next-schema.json',
+      '--baseline',
+      'x',
+      '--baseline',
+      'y',
+    ],
+    [
+      'validate',
+      'examples/schema.json',
+      'examples/valid.json',
+      '--baseline',
+      'x',
+    ],
+    [
+      'baseline',
+      'examples/schema.json',
+      'examples/next-schema.json',
+      '--baseline',
+      'x',
+    ],
+    [
+      'baseline',
+      'examples/schema.json',
+      'examples/next-schema.json',
+      '--json',
+      '--json',
+    ],
+  ])
+    assert.equal(cli(...args, '--json').status, 2);
+});
+
+test('baseline generation fails explicitly when its artifact cannot be loaded within the file limit', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'statham-baseline-limit-'));
+  try {
+    const before = join(dir, 'before.json'),
+      after = join(dir, 'after.json');
+    writeFileSync(before, JSON.stringify({ $defs: {} }));
+    writeFileSync(
+      after,
+      JSON.stringify({
+        $defs: Object.fromEntries(
+          Array.from({ length: 17000 }, (_, i) => [`d${i}`, true]),
+        ),
+      }),
+    );
+    const result = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'baseline', before, after, '--json'],
+      { encoding: 'utf8', timeout: 8000, maxBuffer: 2 * 1024 * 1024 },
+    );
+    assert.equal(result.status, 2);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, 'error');
+    assert.equal(report.diagnostics[0].code, 'baseline-too-large');
+    assert.match(report.diagnostics[0].message, /1 MiB/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

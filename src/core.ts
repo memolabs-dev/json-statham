@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 
 export interface Diagnostic {
@@ -6,7 +7,8 @@ export interface Diagnostic {
   message: string;
 }
 export interface Report {
-  status: 'valid' | 'invalid' | 'potentially-breaking' | 'unchanged';
+  status:
+    'valid' | 'invalid' | 'potentially-breaking' | 'unchanged' | 'accepted';
   diagnostics: Diagnostic[];
 }
 
@@ -37,6 +39,8 @@ export function validate(schema: unknown, document: unknown): Report {
 
 export interface ComparisonReport extends Report {
   counterexample?: unknown;
+  acceptedDiagnostics?: Diagnostic[];
+  baseline?: { stale: boolean; accepted: number };
 }
 const pointer = (key: string) =>
   key.replaceAll('~', '~0').replaceAll('/', '~1');
@@ -51,7 +55,11 @@ const canonical = (value: unknown): string =>
       : item,
   );
 
-export function compare(before: unknown, after: unknown): ComparisonReport {
+export function compare(
+  before: unknown,
+  after: unknown,
+  baseline?: unknown,
+): ComparisonReport {
   // Compile both contracts even when their text is identical.
   const ajv = new Ajv2020({ strict: true, strictRequired: false });
   const oldCheck = ajv.compile(before as object | boolean);
@@ -102,5 +110,60 @@ export function compare(before: unknown, after: unknown): ComparisonReport {
       break;
     }
   }
+  if (baseline !== undefined) {
+    assertBaseline(baseline);
+    const comparison = digest([before, after]);
+    const acceptedIds = new Set(baseline.accepted);
+    const accepted = report.diagnostics.filter(
+      (d) =>
+        baseline.comparison === comparison &&
+        acceptedIds.has(diagnosticId(comparison, d)),
+    );
+    report.acceptedDiagnostics = accepted;
+    const acceptedSet = new Set(accepted);
+    report.diagnostics = report.diagnostics.filter((d) => !acceptedSet.has(d));
+    report.baseline = {
+      stale: baseline.comparison !== comparison,
+      accepted: accepted.length,
+    };
+    if (accepted.length && !report.diagnostics.length)
+      report.status = 'accepted';
+  }
   return report;
+}
+
+export interface Baseline {
+  version: 1;
+  comparison: string;
+  accepted: string[];
+}
+const digest = (value: unknown): string =>
+  createHash('sha256').update(canonical(value)).digest('hex');
+const diagnosticId = (comparison: string, diagnostic: Diagnostic): string =>
+  digest([comparison, diagnostic.code, diagnostic.path]);
+export function createBaseline(before: unknown, after: unknown): Baseline {
+  const report = compare(before, after);
+  const comparison = digest([before, after]);
+  return {
+    version: 1,
+    comparison,
+    accepted: report.diagnostics.map((d) => diagnosticId(comparison, d)).sort(),
+  };
+}
+
+function assertBaseline(value: unknown): asserts value is Baseline {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Invalid baseline.');
+  const b = value as Record<string, unknown>;
+  const hash = (v: unknown): v is string =>
+    typeof v === 'string' && /^[a-f0-9]{64}$/.test(v);
+  if (
+    Object.keys(b).sort().join(',') !== 'accepted,comparison,version' ||
+    b.version !== 1 ||
+    !hash(b.comparison) ||
+    !Array.isArray(b.accepted) ||
+    !b.accepted.every(hash) ||
+    new Set(b.accepted).size !== b.accepted.length
+  )
+    throw new Error('Invalid baseline.');
 }

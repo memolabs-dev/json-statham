@@ -40,9 +40,21 @@ jobs:
           command: compare
           old-schema: examples/schema.json
           new-schema: examples/next-schema.json
+      - name: Generate reviewed baseline fixture
+        shell: bash
+        run: node dist/cli.js baseline examples/schema.json examples/next-schema.json > "$RUNNER_TEMP/statham-baseline.json"
+      - uses: ./
+        id: accepted
+        with:
+          command: compare
+          old-schema: examples/schema.json
+          new-schema: examples/next-schema.json
+          baseline: ${{ runner.temp }}/statham-baseline.json
       - name: Assert Action outcomes and outputs
         shell: bash
         env:
+          ACCEPTED_STATUS: ${{ steps.accepted.outputs.status }}
+          ACCEPTED_CODE: ${{ steps.accepted.outputs.exit-code }}
           VALID_STATUS: ${{ steps.valid.outputs.status }}
           VALID_CODE: ${{ steps.valid.outputs.exit-code }}
           INVALID_STATUS: ${{ steps.invalid.outputs.status }}
@@ -52,6 +64,8 @@ jobs:
           COMPARE_CODE: ${{ steps.comparison.outputs.exit-code }}
           COMPARE_OUTCOME: ${{ steps.comparison.outcome }}
         run: |
+          test "$ACCEPTED_STATUS" = accepted
+          test "$ACCEPTED_CODE" = 0
           test "$VALID_STATUS" = valid
           test "$VALID_CODE" = 0
           test "$INVALID_STATUS" = invalid

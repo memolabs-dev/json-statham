@@ -63,6 +63,24 @@
       "remote_ci": "PASS",
       "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41045582300",
       "independent_review": "PASS: read-only reviewer reran all 9 Action process tests; no blocking findings"
+    },
+    "baselines": {
+      "issue": 8,
+      "status": "VERIFYING",
+      "spec": "baselines.md",
+      "tasks": {
+        "A": "DONE",
+        "B": "DONE",
+        "C": "DONE",
+        "D": "DONE",
+        "E": "VERIFYING",
+        "F": "IN_PROGRESS"
+      },
+      "evidence": "baselines.md; npm run check PASS (37 tests); actual composite CI and integration pending.",
+      "local_checks": "PASS",
+      "tests": 37,
+      "manual_acceptance_issue": 9,
+      "independent_review": "PASS: both boundary findings fixed and regressions independently rerun; no remaining blocking findings"
     }
   }
 }
