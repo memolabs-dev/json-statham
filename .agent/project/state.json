@@ -20,7 +20,7 @@
   },
   "ready_for_manual_acceptance": true,
   "blockers": [],
-  "next_action": "Guillaume: M0 CLI/portrait acceptance in #2 and consuming GitHub Action acceptance in #6. Future M1 slices: baselines and stable library API.",
+  "next_action": "Guillaume: manual acceptance in #2 (M0), #6 (Action), #9 (baselines). Remaining M1 implementation slice: stable library API.",
   "repository": "https://github.com/memolabs-dev/json-statham",
   "technical_issue": 1,
   "manual_acceptance_issue": 2,
@@ -66,21 +66,28 @@
     },
     "baselines": {
       "issue": 8,
-      "status": "VERIFYING",
+      "status": "READY_FOR_MANUAL_ACCEPTANCE",
       "spec": "baselines.md",
       "tasks": {
         "A": "DONE",
         "B": "DONE",
         "C": "DONE",
         "D": "DONE",
-        "E": "VERIFYING",
-        "F": "IN_PROGRESS"
+        "E": "DONE",
+        "F": "DONE"
       },
-      "evidence": "baselines.md; npm run check PASS (37 tests); actual composite CI and integration pending.",
+      "evidence": "baselines.md; 37 tests, full pre-commit, independent review after both fixes, six exact-head CI checks including real accepted-baseline composite workflow; PR #10 merged, issue #8 CLOSED, manual #9 OPEN.",
       "local_checks": "PASS",
       "tests": 37,
       "manual_acceptance_issue": 9,
-      "independent_review": "PASS: both boundary findings fixed and regressions independently rerun; no remaining blocking findings"
+      "independent_review": "PASS: both boundary findings fixed and regressions independently rerun; no remaining blocking findings",
+      "technical_issue_status": "CLOSED",
+      "pull_request": 10,
+      "integration": "MERGED",
+      "implementation_commit": "0acc39a98944880cf9b79aff857d9fb4728cc9e1",
+      "merge_commit": "7bb0734b3e306347da37f81fb6de07eaf9bc4536",
+      "remote_ci": "PASS",
+      "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41046588122"
     }
   }
 }

@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: memolabs-dev/json-statham@2848932b9d3f321372d4d06f78d017043fa0dd4f
+      - uses: memolabs-dev/json-statham@7bb0734b3e306347da37f81fb6de07eaf9bc4536
         with:
           schema: contracts/request.schema.json
           document: fixtures/request.json
