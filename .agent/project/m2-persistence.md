@@ -63,3 +63,7 @@ All TX-1..7 verified: 16 persistence CLI tests plus 61 existing domain/CLI/Actio
 All10 checks on exact head 4bf59bf0fc5e32822f20192100993fb284262497 PASS: Node22/24 Linux/macOS, real composite Action, documented migration and durable version workflow. Evidence: https://github.com/memolabs-dev/json-statham/actions/runs/41082690971 and https://github.com/memolabs-dev/json-statham/actions/runs/41082681627. PR19 MERGED as 2c8b75cb1849ab19bd6d51a5540e225aa5b22327; issue16 actually CLOSED (verified from GitHub). Manual acceptance18 remains OPEN.
 
 Risk disposition R1–R4 MITIGATED by no-replace exact-byte/concurrency/recovery/corruption/permissions/ACL tests and independent source review; R5 MITIGATED by size/depth/FIFO/worker deadline regressions; R6 MITIGATED within the declared local filesystem sync contract by recovery-phase tests, direct ordering review and Linux/macOS CI. No high/critical open risks. Power-loss hardware emulation, hostile same-user/root and network filesystem guarantees are not claimed. No live user-data migration or registry publication occurred. A–H technically DONE with this evidence; final scope status READY_FOR_MANUAL_ACCEPTANCE, human recipe in README and issue18. Branches retained.
+
+## Owner acceptance — 2026-10-30
+
+Guillaume closed [#18](https://github.com/memolabs-dev/json-statham/issues/18) as completed at 15:49:58Z and confirmed in conversation. This scope is DONE after human acceptance. Earlier closure text describes the state before that acceptance; #15 remains a separate first-slice acceptance ticket.

@@ -1,5 +1,5 @@
 {
-  "status": "READY_FOR_MANUAL_ACCEPTANCE",
+  "status": "DONE",
   "scope": "M2 persistent file versions (#16)",
   "tasks": {
     "A": "DONE",
@@ -20,9 +20,9 @@
     "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41082690971",
     "implementation_commit": "4bf59bf0fc5e32822f20192100993fb284262497"
   },
-  "ready_for_manual_acceptance": true,
+  "ready_for_manual_acceptance": false,
   "blockers": [],
-  "next_action": "Guillaume: manual acceptance #18 for durable versions and #15 for dry-run; previous #2/#6/#9/#12 remain human acceptance only. M2 technical #14/#16 are closed; no delivered scope should be reproposed. M3/automatic suggestions require separate scope.",
+  "next_action": "M2 persistence accepted by Guillaume (#18 CLOSED completed, 2026-10-30T15:49:58Z). M3 first slice selection in progress; older human acceptance #2/#6/#9/#12/#15 remains open, not an implementation blocker.",
   "repository": "https://github.com/memolabs-dev/json-statham",
   "technical_issue": 16,
   "manual_acceptance_issue": 18,
@@ -149,7 +149,7 @@
     },
     "m2_persistence": {
       "issue": 16,
-      "status": "READY_FOR_MANUAL_ACCEPTANCE",
+      "status": "DONE",
       "spec": "m2-persistence.md",
       "risk_tier": "T3",
       "tasks": {
@@ -162,7 +162,7 @@
         "G": "DONE",
         "H": "DONE"
       },
-      "evidence": "77/77 local tests, full pre-commit, npm pack dry-run, installed ESM/TypeScript/CLI PASS; all10 exact-head push/PR checks PASS (Linux/macOS Node22/24, durable workflow and real Action); #19 MERGED, #16 actually CLOSED, #18 OPEN.",
+      "evidence": "77/77 local tests, full pre-commit, npm pack dry-run, installed ESM/TypeScript/CLI PASS; all10 exact-head push/PR checks PASS (Linux/macOS Node22/24, durable workflow and real Action); #19 MERGED, #16 actually CLOSED, #18 CLOSED completed by owner.",
       "technical_issue_status": "CLOSED",
       "remote_ci": "PASS",
       "local_checks": "PASS",
@@ -175,7 +175,13 @@
       "merge_commit": "2c8b75cb1849ab19bd6d51a5540e225aa5b22327",
       "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41082690971",
       "critical_risks_open": 0,
-      "high_risks_open": 0
+      "high_risks_open": 0,
+      "manual_acceptance_status": "CLOSED",
+      "acceptance": {
+        "source_ref": "https://github.com/memolabs-dev/json-statham/issues/18",
+        "closed_at": "2026-10-30T15:49:58Z",
+        "owner_confirmation": "User: Non c\u2019est bon j\u2019ai clos continues"
+      }
     }
   },
   "milestones": {
@@ -195,9 +201,10 @@
       "scope_note": "Explicit proposals, dry-run and append-only durable apply/restore technically delivered. Automatic schema-derived suggestions are optional separately scoped design.",
       "first_slice_status": "READY_FOR_MANUAL_ACCEPTANCE",
       "first_slice_technical_status": "CLOSED",
-      "manual_acceptance_status": "OPEN",
+      "manual_acceptance_status": "PARTIAL: #18 CLOSED, #15 OPEN",
       "technical_status": "CLOSED",
       "manual_acceptance_issues": [15, 18]
     }
-  }
+  },
+  "manual_acceptance_status": "CLOSED"
 }
