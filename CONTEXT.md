@@ -18,3 +18,7 @@ _Avoid_: schema difference
 _Avoid_: sample payload, proof of compatibility
 
 **Diagnostic**: An actionable explanation located at a document or schema JSON Pointer, without revealing input values.
+
+**Contract check**: A validation or comparison evaluated as one acceptance gate.
+
+**Annotation**: A diagnostic attached to a file in a development platform, retaining its contract location.

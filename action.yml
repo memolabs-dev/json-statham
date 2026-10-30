@@ -1,0 +1,44 @@
+name: JSON Statham
+description: Validate JSON documents or compare JSON Schema contracts with deterministic diagnostics.
+inputs:
+  command:
+    description: validate or compare
+    default: validate
+  schema:
+    description: Schema file for validate, relative to the workspace
+  document:
+    description: Document file for validate, relative to the workspace
+  old-schema:
+    description: Previous schema file for compare, relative to the workspace
+  new-schema:
+    description: New schema file for compare, relative to the workspace
+outputs:
+  status:
+    description: CLI report status
+    value: ${{ steps.check.outputs.status }}
+  exit-code:
+    description: CLI exit code (0 success, 1 invalid document, 2 input error, 3 potential breakage)
+    value: ${{ steps.check.outputs.exit-code }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: '24'
+    - name: Build Action-owned CLI
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        npm ci --ignore-scripts --no-audit --no-fund
+        npm run build
+    - name: Check JSON contract
+      id: check
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        INPUT_COMMAND: ${{ inputs.command }}
+        INPUT_SCHEMA: ${{ inputs.schema }}
+        INPUT_DOCUMENT: ${{ inputs.document }}
+        INPUT_OLD_SCHEMA: ${{ inputs.old-schema }}
+        INPUT_NEW_SCHEMA: ${{ inputs.new-schema }}
+      run: node "$GITHUB_ACTION_PATH/dist/action.js"
