@@ -1,6 +1,6 @@
 {
-  "status": "READY_FOR_MANUAL_ACCEPTANCE",
-  "scope": "M0",
+  "status": "VERIFYING",
+  "scope": "M2 persistent file versions (#16)",
   "tasks": {
     "A": "DONE",
     "B": "DONE",
@@ -18,9 +18,9 @@
     "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41044047077",
     "implementation_commit": "68b4e8c2022c492ebe6282a98224a0011ea6f8d2"
   },
-  "ready_for_manual_acceptance": true,
+  "ready_for_manual_acceptance": false,
   "blockers": [],
-  "next_action": "Guillaume: pending human acceptance #2/#6/#9/#12/#15. Next M2 technical scope is #16: specify transactional persistent apply/restore before implementation. Delivered M2 proposal/dry-run/in-memory rollback #14 must not be reproposed.",
+  "next_action": "Full local gates, exact-head Linux/macOS CI, independent final docs review, PR merge and close #16; retain separate human acceptance.",
   "repository": "https://github.com/memolabs-dev/json-statham",
   "technical_issue": 1,
   "manual_acceptance_issue": 2,
@@ -144,6 +144,29 @@
       "merge_commit": "5bd60f2ad9f89aa2f3ff0dde20f0e9caa6c95f43",
       "remote_ci": "PASS",
       "ci_url": "https://github.com/memolabs-dev/json-statham/actions/runs/41051733050"
+    },
+    "m2_persistence": {
+      "issue": 16,
+      "status": "VERIFYING",
+      "spec": "m2-persistence.md",
+      "risk_tier": "T3",
+      "tasks": {
+        "A": "DONE",
+        "B": "DONE",
+        "C": "DONE",
+        "D": "DONE",
+        "E": "DONE",
+        "F": "DONE",
+        "G": "VERIFYING",
+        "H": "TODO"
+      },
+      "evidence": "npm run check PASS (77/77, macOS); disposable real CLI persistence/recovery/races/permission tests; installed tarball ESM/TypeScript/CLI PASS. CI pending.",
+      "technical_issue_status": "OPEN",
+      "remote_ci": "PENDING",
+      "local_checks": "PASS",
+      "tests": 77,
+      "manual_acceptance_issue": 18,
+      "independent_review": "PASS: independent standards/security and spec reviews, including recovered output+marker sync ordering, CLI dispatch, real ACL and six focused regression reruns. Final docs review pending."
     }
   },
   "milestones": {
@@ -160,7 +183,7 @@
       "first_slice_issue": 14,
       "manual_acceptance_issue": 15,
       "remaining_technical_issues": [16],
-      "scope_note": "First slice is clone-only migration proposal/dry-run/rollback proof. Persistent apply/restore is not implemented.",
+      "scope_note": "Dry-run delivered; persistent append-only versions implementing #16 are under final verification.",
       "first_slice_status": "READY_FOR_MANUAL_ACCEPTANCE",
       "first_slice_technical_status": "CLOSED",
       "manual_acceptance_status": "OPEN"
