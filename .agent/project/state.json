@@ -1,0 +1,24 @@
+{
+  "status": "VERIFYING",
+  "scope": "M0",
+  "tasks": {
+    "A": "DONE",
+    "B": "DONE",
+    "C": "DONE",
+    "D": "DONE",
+    "E": "DONE",
+    "F": "VERIFYING"
+  },
+  "evidence_ref": "m0.md",
+  "verification": {
+    "local": "PASS",
+    "tests": 14,
+    "package_install_smoke": "PASS",
+    "remote_ci": "UNKNOWN"
+  },
+  "ready_for_manual_acceptance": false,
+  "blockers": [],
+  "next_action": "Publish feat/m0-cli and verify GitHub Actions; reconcile technical and manual acceptance tickets.",
+  "repository": "https://github.com/memolabs-dev/json-statham",
+  "technical_issue": 1
+}
